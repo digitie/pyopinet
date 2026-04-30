@@ -35,6 +35,7 @@
 - `KPETRO_YN`은 알뜰주유소 여부가 아니라 품질인증 여부이며 `is_kpetro`로 매핑한다.
 - 알뜰주유소 여부는 상표 코드 `RTE`, `RTX`, `NHO`로 판정한다.
 - 인증키, 실제 API 키, 원본 비밀값은 코드, fixture, 로그, 문서에 남기지 않는다.
+- 로컬 live 테스트 키는 `.env` 또는 환경변수에만 둔다. `.env.example` 외의 `.env*` 파일은 커밋하지 않는다.
 
 ## 문서 라우팅
 - 사용자용 개요와 예시: `README.md`
@@ -67,6 +68,7 @@
 - 단위 테스트: `pytest`
 - 커버리지 목표: `pytest --cov=opinet --cov-fail-under=90`
 - 타입 검사: `python -m mypy opinet`
+- 실제 API 스모크: `pytest -m live --run-live` (`OPINET_API_KEY` 필요)
 - HTTP mocking 테스트는 `responses`를 사용한다.
 - 좌표 테스트는 강남역, 서울시청, 부산시청 같은 기준점과 실제 KATEC 응답값을 함께 검증한다.
 - 타입 변환 테스트는 정상값, 빈 문자열/공백/None, 잘못된 포맷을 모두 포함한다.

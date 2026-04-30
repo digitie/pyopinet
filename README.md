@@ -52,6 +52,14 @@ pip install -e ".[dev]"
 pytest
 ```
 
+실제 API 서버 테스트를 하려면 저장소에 커밋되지 않는 로컬 `.env`에 키를 넣습니다.
+
+```bash
+cp .env.example .env
+# .env 안의 OPINET_API_KEY 값을 본인 키로 변경
+pytest -m live --run-live
+```
+
 ### 3단계: 사용
 
 ```python
@@ -441,7 +449,9 @@ python -m pytest --cov=opinet --cov-fail-under=90
 python -m mypy opinet
 ```
 
-기본 테스트는 네트워크를 사용하지 않고 `responses`로 HTTP 응답을 재생합니다. 실제 API 호출 테스트를 추가할 때는 `@pytest.mark.live`로 분리하고 `OPINET_API_KEY`를 요구하세요.
+기본 테스트는 네트워크를 사용하지 않고 `responses`로 HTTP 응답을 재생합니다. 실제 API 호출 테스트를 추가할 때는 `@pytest.mark.live`로 분리하고 `--run-live`와 `OPINET_API_KEY`를 요구하세요.
+라이브 테스트는 `.env` 또는 환경변수의 `OPINET_API_KEY`를 읽지만, 키는 `.gitignore`로 보호되는 로컬 파일에만 둡니다.
+키가 공식 open API 게이트웨이에 아직 provision되지 않은 경우 서버가 HTTP 200과 빈 `RESULT.OIL`을 줄 수 있으며, 이때 live 파싱 smoke는 skip됩니다.
 
 구현 상태와 유지보수 체크리스트는 [`docs/implementation-status.md`](./docs/implementation-status.md)에 따로 정리되어 있습니다.
 

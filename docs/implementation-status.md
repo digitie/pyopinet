@@ -55,6 +55,23 @@ python -m mypy opinet
 - 테스트에는 `@pytest.mark.live`를 붙입니다.
 - 캡처한 fixture에는 키, 개인 식별 정보, 호출 URL의 인증 파라미터를 남기지 않습니다.
 - 라이브 호출로 확인한 응답도 fixture에 저장할 때 숫자/날짜/시간 필드는 문자열 그대로 둡니다.
+- `.env`는 로컬 전용이며 커밋하지 않습니다. `.env.example`만 추적합니다.
+- `areaCode.do`처럼 항상 데이터가 있어야 할 엔드포인트가 빈 `RESULT.OIL`을 반환하면 키가 공식 open API 게이트웨이에 provision되지 않은 상태로 간주하고 파싱 smoke 테스트를 skip합니다.
+
+라이브 테스트 실행:
+
+```bash
+pytest -m live --run-live
+```
+
+### 2026-05-01 Live Run Note
+
+로컬 `.env`의 키로 실제 서버에 연결했을 때 `areaCode.do`의 JSON envelope는 정상 수신되었습니다. 다만 공식 5개 API가 모두 HTTP 200과 빈 `RESULT.OIL`을 반환하는 상태가 관찰되었습니다. 이 응답은 파서 오류가 아니라 키가 공식 open API 게이트웨이에 데이터 반환 권한으로 provision되지 않은 상태일 가능성이 높습니다.
+
+그래서 live 테스트는 두 단계로 나뉩니다.
+
+- 서버 연결과 `RESULT.OIL` envelope 확인은 pass/fail로 검증합니다.
+- 실제 데이터 파싱 smoke는 `areaCode.do`가 비어 있으면 skip하고, 데이터가 반환되는 키에서는 공식 5개 API 전체를 검증합니다.
 
 ## 반복 실수 방지
 
