@@ -1,0 +1,27 @@
+{
+  "RESULT": {
+    "OIL": {
+      "UNI_ID": "A0010207",
+      "POLL_DIV_CO": "SKE",
+      "GPOLL_DIV_CO": " ",
+      "OS_NM": "SK서광주유소",
+      "VAN_ADR": "서울 강남구 역삼동 834-47",
+      "NEW_ADR": "서울 강남구 역삼로 142",
+      "TEL": "02-562-4855",
+      "SIGUNCD": "0113",
+      "LPG_YN": "N",
+      "MAINT_YN": "Y",
+      "CAR_WASH_YN": "Y",
+      "CVS_YN": "N",
+      "KPETRO_YN": "N",
+      "GIS_X_COOR": "314871.80000",
+      "GIS_Y_COOR": "544012.00000",
+      "OIL_PRICE": [
+        {"PRODCD": "B027", "PRICE": "1745", "TRADE_DT": "20250723", "TRADE_TM": "145618"},
+        {"PRODCD": "B034", "PRICE": "1920", "TRADE_DT": "20250723", "TRADE_TM": "145312"},
+        {"PRODCD": "D047", "PRICE": "1629", "TRADE_DT": "20250723", "TRADE_TM": "144009"},
+        {"PRODCD": "K015", "PRICE": "", "TRADE_DT": "20250723", "TRADE_TM": "000000"}
+      ]
+    }
+  }
+}

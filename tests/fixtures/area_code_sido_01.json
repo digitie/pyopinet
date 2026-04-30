@@ -1,0 +1,9 @@
+{
+  "RESULT": {
+    "OIL": [
+      {"AREA_CD": "0101", "AREA_NM": "종로구"},
+      {"AREA_CD": "0113", "AREA_NM": "강남구"},
+      {"AREA_CD": "0114", "AREA_NM": "서초구"}
+    ]
+  }
+}

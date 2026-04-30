@@ -1,0 +1,11 @@
+{
+  "RESULT": {
+    "OIL": [
+      {"TRADE_DT": "20250723", "PRODCD": "B034", "PRODNM": "고급휘발유", "PRICE": "1919.44", "DIFF": "-0.10"},
+      {"TRADE_DT": "20250723", "PRODCD": "B027", "PRODNM": "휘발유", "PRICE": "1667.33", "DIFF": "-0.23"},
+      {"TRADE_DT": "20250723", "PRODCD": "D047", "PRODNM": "자동차용경유", "PRICE": "1532.22", "DIFF": "+0.39"},
+      {"TRADE_DT": "20250723", "PRODCD": "C004", "PRODNM": "실내등유", "PRICE": "1295.23", "DIFF": "-0.72"},
+      {"TRADE_DT": "20250723", "PRODCD": "K015", "PRODNM": "자동차용부탄", "PRICE": "1052.64", "DIFF": "-0.07"}
+    ]
+  }
+}
