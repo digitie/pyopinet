@@ -4,13 +4,16 @@ from __future__ import annotations
 
 from collections.abc import Mapping as MappingABC
 from dataclasses import dataclass, field
-from datetime import date, time
+from datetime import date, datetime, time, tzinfo
 from math import isfinite
 from types import MappingProxyType
-from typing import Any, Literal, Mapping
+from typing import TYPE_CHECKING, Any, Literal, Mapping
 
 from .codes import BrandCode, FuelType, ProductCode, StationType, opinet_sido_to_bjd, product_code_to_fuel_type
 from .exceptions import OpinetInvalidParameterError
+
+if TYPE_CHECKING:
+    from .normalized import NormalizedFuelAverage, NormalizedFuelRegionCode, NormalizedFuelStation
 
 _EMPTY_RAW: Mapping[str, Any] = MappingProxyType({})
 _SENSITIVE_RAW_KEYS = frozenset({"certkey", "api_key", "apikey", "authorization", "x-api-key"})
@@ -149,6 +152,20 @@ class AvgPrice:
     def fuel_type(self) -> FuelType:
         return product_code_to_fuel_type(self.product_code)
 
+    def price_datetime(self, tz: str | tzinfo = "Asia/Seoul") -> datetime:
+        """Return the average price date as timezone-aware midnight."""
+        return self.to_normalized().price_datetime(tz)
+
+    def price_timestamp(self, tz: str | tzinfo = "Asia/Seoul") -> float:
+        """Return ``price_datetime(tz).timestamp()``."""
+        return self.to_normalized().price_timestamp(tz)
+
+    def to_normalized(self, *, endpoint: str = "avgAllPrice.do") -> NormalizedFuelAverage:
+        """Return an application-facing normalized average-price record."""
+        from .normalized import normalize_average
+
+        return normalize_average(self, endpoint=endpoint)
+
 
 @dataclass(frozen=True, slots=True)
 class Station:
@@ -210,6 +227,16 @@ class Station:
     @property
     def coordinates(self) -> StationCoordinates:
         return StationCoordinates.from_values(self.katec_x, self.katec_y, self.lon, self.lat)
+
+    def trade_datetime(self, tz: str | tzinfo = "Asia/Seoul") -> datetime | None:
+        """Return timezone-aware trade datetime when date and time are present."""
+        return self.to_normalized(endpoint="unknown").trade_datetime(tz)
+
+    def to_normalized(self, *, endpoint: str) -> NormalizedFuelStation:
+        """Return an application-facing normalized station record."""
+        from .normalized import normalize_station
+
+        return normalize_station(self, endpoint=endpoint)
 
 
 @dataclass(frozen=True, slots=True)
@@ -303,3 +330,9 @@ class AreaCode:
     def bjd_sido_prefix(self) -> str:
         sido_code = self.code if self.code_level == "sido" else self.code[:2]
         return opinet_sido_to_bjd(sido_code)
+
+    def to_normalized(self, *, endpoint: str = "areaCode.do") -> NormalizedFuelRegionCode:
+        """Return an application-facing normalized region-code record."""
+        from .normalized import normalize_region_code
+
+        return normalize_region_code(self, endpoint=endpoint)

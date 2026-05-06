@@ -675,3 +675,53 @@ def to_station_record(station):
 | 날짜 | 내용 |
 |---|---|
 | 2026-05-06 (rev4) | 공용 normalized layer 추가. `FuelType`, ProductCode 양방향 mapping, Station product/trade context, coordinate value object, AreaCode helper, read-only raw payload 보존을 문서화. |
+
+### normalized DTO records
+
+`opinet.normalized` 모듈은 앱 저장 계층에 바로 넘기기 쉬운 DTO record를 제공합니다. 기존 `AvgPrice`, `Station`, `AreaCode` 모델은 그대로 유지되고, 필요할 때 `to_normalized()`로 변환합니다.
+
+```python
+from opinet import OpinetClient, ProductCode
+from opinet.normalized import (
+    NormalizedFuelAverage,
+    NormalizedFuelStation,
+    NormalizedFuelRegionCode,
+    to_json_safe_raw,
+)
+
+client = OpinetClient()
+
+avg = client.get_national_average_price()[0]
+avg_record = avg.to_normalized(endpoint="avgAllPrice.do")
+assert isinstance(avg_record, NormalizedFuelAverage)
+assert avg_record.provider == "opinet"
+assert avg_record.provider_product_code == "B034"
+assert avg_record.fuel_type.value == "premium_gasoline"
+assert avg_record.price_datetime().tzinfo is not None  # Asia/Seoul midnight by default
+assert avg_record.price_timestamp() == avg.price_timestamp()
+
+station = client.get_lowest_price_top20(ProductCode.GASOLINE)[0]
+station_record = station.to_normalized(endpoint="lowTop10.do")
+assert isinstance(station_record, NormalizedFuelStation)
+assert station_record.provider_station_id == station.provider_station_id
+assert station_record.provider_product_code == "B027"  # request context is preserved
+assert station_record.provider_product_name is None    # PRODNM is absent in many station rows
+assert station_record.trade_datetime() is None         # unless TRADE_DT and TRADE_TM both exist
+
+area = client.get_area_codes("01")[0]
+area_record = area.to_normalized()
+assert isinstance(area_record, NormalizedFuelRegionCode)
+assert area_record.code_level == "sigungu"
+assert area_record.parent_sido_code == "01"
+assert area_record.bjd_sido_prefix == "11"
+
+plain_raw = to_json_safe_raw(station.raw)  # plain dict/list, safe for json.dumps
+```
+
+`NormalizedFuelAverage.price_datetime()`는 평균가처럼 날짜만 있는 record를 KST 자정의 timezone-aware `datetime`으로 반환합니다. `NormalizedFuelStation.trade_datetime()`는 `trade_date`와 `trade_time`이 모두 있을 때만 KST timezone-aware `datetime`을 반환하고, 둘 중 하나라도 없으면 `None`을 반환합니다.
+
+`NormalizedFuelRegionCode`는 OpiNet 지역 코드의 level, parent sido, BJD sido prefix까지만 제공합니다. OpiNet 시군구 4자리 code를 법정동 10자리 code로 자동 변환하지 않습니다.
+
+| 날짜 | 내용 |
+|---|---|
+| 2026-05-06 (rev5) | `opinet.normalized` DTO layer 추가. `NormalizedFuelAverage`, `NormalizedFuelStation`, `NormalizedFuelRegionCode`, KST datetime helper, JSON-safe raw 변환 helper, 모델별 `to_normalized()` 문서화. |

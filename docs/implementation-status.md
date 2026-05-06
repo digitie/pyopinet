@@ -178,3 +178,50 @@ record = {
 ```
 
 이 예시는 pyopinet의 normalized 모델만 사용합니다. 저장 schema, cache 전략, raw 보관 여부는 호출 애플리케이션의 책임입니다.
+
+---
+
+## normalized DTO record layer
+
+2026-05-06에 `opinet.normalized` 모듈을 추가했습니다. 이 모듈은 기존 응답 모델의 속성 위에 앱 친화적인 DTO를 얹는 계층입니다. 기존 public model과 client method는 변경하지 않고, `AvgPrice.to_normalized()`, `Station.to_normalized()`, `AreaCode.to_normalized()`로 변환합니다.
+
+### DTO classes
+
+| DTO | Source model | 기본 endpoint | 주요 필드 |
+|---|---|---|---|
+| `NormalizedFuelAverage` | `AvgPrice` | `avgAllPrice.do` | `provider`, `provider_endpoint`, `provider_product_code`, `provider_product_name`, `fuel_type`, `trade_date`, `price`, `diff`, `raw` |
+| `NormalizedFuelStation` | `Station` | 호출자가 지정 | `provider_station_id`, `provider_station_name`, `provider_product_code`, `provider_product_name`, `fuel_type`, `brand_code`, `price`, `distance_m`, 주소, 좌표, 거래시각, `raw` |
+| `NormalizedFuelRegionCode` | `AreaCode` | `areaCode.do` | `provider_region_code`, `provider_region_name`, `code_level`, `parent_sido_code`, `bjd_sido_prefix`, `raw` |
+
+모든 DTO의 `provider` 값은 `"opinet"`입니다. Station DTO의 `provider_endpoint`는 `lowTop10.do`와 `aroundAll.do` 중 호출 맥락에 따라 달라지므로 변환 시 명시하게 했습니다.
+
+### datetime helpers
+
+- `NormalizedFuelAverage.price_datetime(tz="Asia/Seoul")`: `trade_date`를 해당 timezone의 자정으로 변환합니다.
+- `NormalizedFuelAverage.price_timestamp(tz="Asia/Seoul")`: 위 datetime의 Unix timestamp를 반환합니다.
+- `NormalizedFuelStation.trade_datetime(tz="Asia/Seoul")`: `trade_date`와 `trade_time`이 모두 있을 때 timezone-aware datetime을 반환합니다. 둘 중 하나라도 없으면 `None`입니다.
+- 기존 `AvgPrice.price_datetime()`, `AvgPrice.price_timestamp()`, `Station.trade_datetime()`도 동일한 helper로 연결했습니다.
+
+### raw JSON-safe helper
+
+`to_json_safe_raw()`와 alias `raw_to_json_safe()`는 read-only `MappingProxyType`, tuple로 보존된 nested `OIL_PRICE`, enum, date/time 값을 JSON-safe plain `dict`/`list` 구조로 변환합니다. 기본 fixture 경로에서는 숫자/날짜/시간 raw 값이 원본 문자열 그대로 보존됩니다.
+
+```python
+from opinet.normalized import to_json_safe_raw
+
+raw = to_json_safe_raw(station.raw)
+# json.dumps(raw, ensure_ascii=False) 가능
+```
+
+### 추가 검증
+
+`tests/test_normalized_records.py`를 추가했습니다.
+
+| 케이스 | 검증 |
+|---|---|
+| normalized record 생성 | 세 DTO의 provider/endpoint/provider code/name/fuel field 확인 |
+| AvgPrice KST timestamp | 날짜-only 평균가가 Asia/Seoul 자정 datetime/timestamp로 변환됨 |
+| Station trade datetime | trade field 없음은 `None`, `TRADE_DT`/`TRADE_TM` 있음은 KST datetime |
+| AreaCode normalized | code level, parent sido, BJD sido prefix 포함 |
+| raw JSON-safe | nested `OIL_PRICE`가 plain list/dict로 변환되고 `json.dumps` 가능 |
+| PRODNM 없는 Station | 요청 `prodcd`는 product code로 보존되고 provider product name은 `None` |

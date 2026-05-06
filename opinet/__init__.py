@@ -24,6 +24,13 @@ from .exceptions import (
     OpinetServerError,
 )
 from .models import AreaCode, AvgPrice, KatecPoint, OilPrice, Station, StationCoordinates, StationDetail, Wgs84Point
+from .normalized import (
+    NormalizedFuelAverage,
+    NormalizedFuelRegionCode,
+    NormalizedFuelStation,
+    raw_to_json_safe,
+    to_json_safe_raw,
+)
 
 __all__ = [
     "AreaCode",
@@ -32,6 +39,9 @@ __all__ = [
     "CanonicalFuelType",
     "FuelType",
     "KatecPoint",
+    "NormalizedFuelAverage",
+    "NormalizedFuelRegionCode",
+    "NormalizedFuelStation",
     "OilPrice",
     "OpinetAuthError",
     "OpinetClient",
@@ -53,4 +63,6 @@ __all__ = [
     "is_alddle",
     "opinet_sido_to_bjd",
     "product_code_to_fuel_type",
+    "raw_to_json_safe",
+    "to_json_safe_raw",
 ]
