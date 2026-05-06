@@ -183,7 +183,9 @@ record = {
 
 ## normalized DTO record layer
 
-2026-05-06에 `opinet.normalized` 모듈을 추가했습니다. 이 모듈은 기존 응답 모델의 속성 위에 앱 친화적인 DTO를 얹는 계층입니다. 기존 public model과 client method는 변경하지 않고, `AvgPrice.to_normalized()`, `Station.to_normalized()`, `AreaCode.to_normalized()`로 변환합니다.
+2026-05-06에 `opinet.normalized` 모듈을 추가했습니다. 이 모듈은 기존 응답 모델의 속성 위에 앱 친화적인 Pydantic DTO를 얹는 계층입니다. 기존 public model과 client method는 변경하지 않고, `AvgPrice.to_normalized()`, `Station.to_normalized()`, `AreaCode.to_normalized()`로 변환합니다.
+
+DTO는 Pydantic v2 `BaseModel` 기반이며 `frozen=True`, `extra="forbid"` 설정을 사용합니다. 호출 앱은 `model_dump()` 또는 `model_dump(mode="json")`로 저장 계층에 넘길 payload를 만들 수 있습니다.
 
 ### DTO classes
 
@@ -225,3 +227,4 @@ raw = to_json_safe_raw(station.raw)
 | AreaCode normalized | code level, parent sido, BJD sido prefix 포함 |
 | raw JSON-safe | nested `OIL_PRICE`가 plain list/dict로 변환되고 `json.dumps` 가능 |
 | PRODNM 없는 Station | 요청 `prodcd`는 product code로 보존되고 provider product name은 `None` |
+| Pydantic 동작 | DTO가 `BaseModel`이며 frozen/extra forbid/model_dump 동작 |

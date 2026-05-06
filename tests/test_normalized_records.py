@@ -4,6 +4,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 import responses
+from pydantic import BaseModel, ValidationError
 
 from opinet import (
     FuelType,
@@ -25,6 +26,7 @@ def test_avg_price_to_normalized_record(client, load_fixture):
     normalized = avg.to_normalized(endpoint="avgAllPrice.do")
 
     assert isinstance(normalized, NormalizedFuelAverage)
+    assert isinstance(normalized, BaseModel)
     assert normalized.provider == "opinet"
     assert normalized.provider_endpoint == "avgAllPrice.do"
     assert normalized.provider_product_code == "B027"
@@ -33,6 +35,24 @@ def test_avg_price_to_normalized_record(client, load_fixture):
     assert normalized.price == pytest.approx(1667.33)
     assert normalized.diff == pytest.approx(-0.23)
     assert normalized.raw["PRICE"] == "1667.33"
+    assert normalized.model_dump()["provider"] == "opinet"
+    assert normalized.model_dump(mode="json")["trade_date"] == "2025-07-23"
+    with pytest.raises(ValidationError):
+        normalized.price = 0.0
+
+
+def test_normalized_records_reject_extra_fields():
+    with pytest.raises(ValidationError):
+        NormalizedFuelRegionCode(
+            provider_endpoint="areaCode.do",
+            provider_region_code="01",
+            provider_region_name="Seoul",
+            code_level="sido",
+            parent_sido_code=None,
+            bjd_sido_prefix="11",
+            raw={},
+            extra_field="not allowed",
+        )
 
 
 @responses.activate

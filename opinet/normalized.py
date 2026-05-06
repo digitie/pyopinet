@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import Mapping as MappingABC
-from dataclasses import dataclass, field
 from datetime import date, datetime, time, tzinfo
 from enum import Enum
 from typing import Any, Literal, TypeAlias, TYPE_CHECKING
 from zoneinfo import ZoneInfo
+
+from pydantic import BaseModel, ConfigDict
 
 from .codes import FuelType
 from .models import StationCoordinates
@@ -45,11 +46,14 @@ def to_json_safe_raw(value: Any) -> JsonValue:
 raw_to_json_safe = to_json_safe_raw
 
 
-@dataclass(frozen=True, slots=True)
-class NormalizedFuelAverage:
+class _NormalizedModel(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+
+class NormalizedFuelAverage(_NormalizedModel):
     """Normalized national average fuel price record."""
 
-    provider: Literal["opinet"] = field(default=PROVIDER, init=False)
+    provider: Literal["opinet"] = PROVIDER
     provider_endpoint: str
     provider_product_code: str
     provider_product_name: str
@@ -57,7 +61,7 @@ class NormalizedFuelAverage:
     trade_date: date
     price: float
     diff: float
-    raw: dict[str, JsonValue]
+    raw: dict[str, Any]
 
     def price_datetime(self, tz: str | tzinfo = DEFAULT_TIMEZONE) -> datetime:
         """Return the price date as timezone-aware midnight in the given timezone."""
@@ -68,11 +72,10 @@ class NormalizedFuelAverage:
         return self.price_datetime(tz).timestamp()
 
 
-@dataclass(frozen=True, slots=True)
-class NormalizedFuelStation:
+class NormalizedFuelStation(_NormalizedModel):
     """Normalized fuel station price/search record."""
 
-    provider: Literal["opinet"] = field(default=PROVIDER, init=False)
+    provider: Literal["opinet"] = PROVIDER
     provider_endpoint: str
     provider_station_id: str
     provider_station_name: str
@@ -92,7 +95,7 @@ class NormalizedFuelStation:
     lat: float
     trade_date: date | None
     trade_time: time | None
-    raw: dict[str, JsonValue]
+    raw: dict[str, Any]
 
     def trade_datetime(self, tz: str | tzinfo = DEFAULT_TIMEZONE) -> datetime | None:
         """Return a timezone-aware trade datetime when both date and time are available."""
@@ -101,18 +104,17 @@ class NormalizedFuelStation:
         return datetime.combine(self.trade_date, self.trade_time, tzinfo=_coerce_tz(tz))
 
 
-@dataclass(frozen=True, slots=True)
-class NormalizedFuelRegionCode:
+class NormalizedFuelRegionCode(_NormalizedModel):
     """Normalized Opinet region code record."""
 
-    provider: Literal["opinet"] = field(default=PROVIDER, init=False)
+    provider: Literal["opinet"] = PROVIDER
     provider_endpoint: str
     provider_region_code: str
     provider_region_name: str
     code_level: Literal["sido", "sigungu"]
     parent_sido_code: str | None
     bjd_sido_prefix: str
-    raw: dict[str, JsonValue]
+    raw: dict[str, Any]
 
 
 def normalize_average(avg: AvgPrice, *, endpoint: str = "avgAllPrice.do") -> NormalizedFuelAverage:
@@ -168,7 +170,7 @@ def normalize_region_code(area: AreaCode, *, endpoint: str = "areaCode.do") -> N
     )
 
 
-def _json_safe_raw_dict(raw: Any) -> dict[str, JsonValue]:
+def _json_safe_raw_dict(raw: Any) -> dict[str, Any]:
     converted = to_json_safe_raw(raw)
     if isinstance(converted, dict):
         return converted

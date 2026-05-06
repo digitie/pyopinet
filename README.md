@@ -428,6 +428,7 @@ skill 파일은 다음을 정의합니다:
 **런타임:**
 - `requests` ≥ 2.28
 - `pyproj` ≥ 3.5
+- `pydantic` ≥ 2.0
 
 **개발:**
 - `pytest` ≥ 7.0
@@ -678,7 +679,7 @@ def to_station_record(station):
 
 ### normalized DTO records
 
-`opinet.normalized` 모듈은 앱 저장 계층에 바로 넘기기 쉬운 DTO record를 제공합니다. 기존 `AvgPrice`, `Station`, `AreaCode` 모델은 그대로 유지되고, 필요할 때 `to_normalized()`로 변환합니다.
+`opinet.normalized` 모듈은 앱 저장 계층에 바로 넘기기 쉬운 Pydantic DTO record를 제공합니다. 기존 `AvgPrice`, `Station`, `AreaCode` 모델은 그대로 유지되고, 필요할 때 `to_normalized()`로 변환합니다. DTO는 Pydantic v2 `BaseModel` 기반이며 `frozen=True`, `extra="forbid"` 설정으로 불변 record처럼 동작합니다.
 
 ```python
 from opinet import OpinetClient, ProductCode
@@ -716,6 +717,8 @@ assert area_record.parent_sido_code == "01"
 assert area_record.bjd_sido_prefix == "11"
 
 plain_raw = to_json_safe_raw(station.raw)  # plain dict/list, safe for json.dumps
+
+payload = station_record.model_dump(mode="json")  # Pydantic JSON mode
 ```
 
 `NormalizedFuelAverage.price_datetime()`는 평균가처럼 날짜만 있는 record를 KST 자정의 timezone-aware `datetime`으로 반환합니다. `NormalizedFuelStation.trade_datetime()`는 `trade_date`와 `trade_time`이 모두 있을 때만 KST timezone-aware `datetime`을 반환하고, 둘 중 하나라도 없으면 `None`을 반환합니다.
@@ -724,4 +727,4 @@ plain_raw = to_json_safe_raw(station.raw)  # plain dict/list, safe for json.dump
 
 | 날짜 | 내용 |
 |---|---|
-| 2026-05-06 (rev5) | `opinet.normalized` DTO layer 추가. `NormalizedFuelAverage`, `NormalizedFuelStation`, `NormalizedFuelRegionCode`, KST datetime helper, JSON-safe raw 변환 helper, 모델별 `to_normalized()` 문서화. |
+| 2026-05-06 (rev5) | `opinet.normalized` Pydantic DTO layer 추가. `NormalizedFuelAverage`, `NormalizedFuelStation`, `NormalizedFuelRegionCode`, KST datetime helper, JSON-safe raw 변환 helper, 모델별 `to_normalized()` 문서화. |
