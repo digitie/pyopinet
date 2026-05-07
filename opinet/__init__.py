@@ -28,6 +28,8 @@ from .normalized import (
     NormalizedFuelAverage,
     NormalizedFuelRegionCode,
     NormalizedFuelStation,
+    NormalizedFuelStationDetail,
+    NormalizedFuelStationDetailPrice,
     raw_to_json_safe,
     to_json_safe_raw,
 )
@@ -42,6 +44,8 @@ __all__ = [
     "NormalizedFuelAverage",
     "NormalizedFuelRegionCode",
     "NormalizedFuelStation",
+    "NormalizedFuelStationDetail",
+    "NormalizedFuelStationDetailPrice",
     "OilPrice",
     "OpinetAuthError",
     "OpinetClient",
