@@ -123,6 +123,27 @@ def test_station_trade_datetime_when_trade_fields_exist(client, load_fixture):
 
 
 @responses.activate
+def test_station_trade_datetime_does_not_depend_on_normalized_endpoint(client, load_fixture, monkeypatch):
+    responses.add(
+        responses.GET,
+        OPINET_BASE_URL + "lowTop10.do",
+        json=load_fixture("low_top10_with_trade_context.json"),
+    )
+
+    station = client.get_lowest_price_top20(ProductCode.GASOLINE, cnt=1)[0]
+    expected = datetime(2025, 7, 23, 14, 56, 18, tzinfo=ZoneInfo("Asia/Seoul"))
+
+    assert station.to_normalized(endpoint="lowTop10.do").provider_endpoint == "lowTop10.do"
+
+    def fail_to_normalized(*args, **kwargs):
+        raise AssertionError("Station.trade_datetime should not call to_normalized")
+
+    monkeypatch.setattr(type(station), "to_normalized", fail_to_normalized)
+
+    assert station.trade_datetime() == expected
+
+
+@responses.activate
 def test_station_detail_to_normalized_record(client, load_fixture):
     responses.add(responses.GET, OPINET_BASE_URL + "detailById.do", json=load_fixture("detail_by_id_A0010207.json"))
 

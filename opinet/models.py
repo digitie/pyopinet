@@ -8,6 +8,7 @@ from datetime import date, datetime, time, tzinfo
 from math import isfinite
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal, Mapping
+from zoneinfo import ZoneInfo
 
 from .codes import BrandCode, FuelType, ProductCode, StationType, opinet_sido_to_bjd, product_code_to_fuel_type
 from .exceptions import OpinetInvalidParameterError
@@ -22,6 +23,12 @@ if TYPE_CHECKING:
 
 _EMPTY_RAW: Mapping[str, Any] = MappingProxyType({})
 _SENSITIVE_RAW_KEYS = frozenset({"certkey", "api_key", "apikey", "authorization", "x-api-key"})
+
+
+def _coerce_tz(tz: str | tzinfo) -> tzinfo:
+    if isinstance(tz, str):
+        return ZoneInfo(tz)
+    return tz
 
 
 def _freeze_raw_value(value: Any) -> Any:
@@ -235,7 +242,9 @@ class Station:
 
     def trade_datetime(self, tz: str | tzinfo = "Asia/Seoul") -> datetime | None:
         """Return timezone-aware trade datetime when date and time are present."""
-        return self.to_normalized(endpoint="unknown").trade_datetime(tz)
+        if self.trade_date is None or self.trade_time is None:
+            return None
+        return datetime.combine(self.trade_date, self.trade_time, tzinfo=_coerce_tz(tz))
 
     def to_normalized(self, *, endpoint: str) -> NormalizedFuelStation:
         """Return an application-facing normalized station record."""
