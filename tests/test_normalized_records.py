@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -11,7 +11,10 @@ from opinet import (
     NormalizedFuelAverage,
     NormalizedFuelRegionCode,
     NormalizedFuelStation,
+    NormalizedFuelStationDetail,
+    NormalizedFuelStationDetailPrice,
     ProductCode,
+    StationType,
     to_json_safe_raw,
 )
 
@@ -117,6 +120,57 @@ def test_station_trade_datetime_when_trade_fields_exist(client, load_fixture):
     assert station.trade_datetime() == expected
     assert normalized.raw["TRADE_DT"] == "20250723"
     assert normalized.raw["TRADE_TM"] == "145618"
+
+
+@responses.activate
+def test_station_detail_to_normalized_record(client, load_fixture):
+    responses.add(responses.GET, OPINET_BASE_URL + "detailById.do", json=load_fixture("detail_by_id_A0010207.json"))
+
+    detail = client.get_station_detail("A0010207")
+    normalized = detail.to_normalized(endpoint="detailById.do")
+
+    assert isinstance(normalized, NormalizedFuelStationDetail)
+    assert isinstance(normalized, BaseModel)
+    assert normalized.provider == "opinet"
+    assert normalized.provider_endpoint == "detailById.do"
+    assert normalized.provider_station_id == "A0010207"
+    assert normalized.provider_station_name == detail.name
+    assert normalized.brand_code == "SKE"
+    assert normalized.sub_brand_code is None
+    assert normalized.station_type is StationType.GAS_STATION
+    assert normalized.sigun_code == "0113"
+    assert normalized.address_jibun == detail.address_jibun
+    assert normalized.address_road == detail.address_road
+    assert normalized.tel == "02-562-4855"
+    assert normalized.coordinates == detail.coordinates
+    assert normalized.katec_x == detail.katec_x
+    assert normalized.katec_y == detail.katec_y
+    assert normalized.lon == detail.lon
+    assert normalized.lat == detail.lat
+    assert normalized.has_maintenance is True
+    assert normalized.has_carwash is True
+    assert normalized.has_cvs is False
+    assert normalized.is_kpetro is False
+    assert normalized.raw["OIL_PRICE"][0]["PRICE"] == "1745"
+
+    first_price = normalized.prices[0]
+    assert isinstance(first_price, NormalizedFuelStationDetailPrice)
+    assert first_price.provider == "opinet"
+    assert first_price.provider_endpoint == "detailById.do"
+    assert first_price.provider_station_id == "A0010207"
+    assert first_price.provider_station_name == detail.name
+    assert first_price.provider_product_code == "B027"
+    assert first_price.fuel_type is FuelType.GASOLINE
+    assert first_price.price == pytest.approx(1745.0)
+    assert first_price.trade_date == date(2025, 7, 23)
+    assert first_price.trade_time == time(14, 56, 18)
+    assert first_price.trade_datetime() == datetime(2025, 7, 23, 14, 56, 18, tzinfo=ZoneInfo("Asia/Seoul"))
+    assert first_price.raw["TRADE_TM"] == "145618"
+
+    payload = normalized.model_dump(mode="json")
+    assert payload["station_type"] == "N"
+    assert payload["prices"][0]["trade_date"] == "2025-07-23"
+    assert payload["prices"][0]["trade_time"] == "14:56:18"
 
 
 @responses.activate

@@ -686,6 +686,8 @@ from opinet import OpinetClient, ProductCode
 from opinet.normalized import (
     NormalizedFuelAverage,
     NormalizedFuelStation,
+    NormalizedFuelStationDetail,
+    NormalizedFuelStationDetailPrice,
     NormalizedFuelRegionCode,
     to_json_safe_raw,
 )
@@ -709,6 +711,21 @@ assert station_record.provider_product_code == "B027"  # request context is pres
 assert station_record.provider_product_name is None    # PRODNM is absent in many station rows
 assert station_record.trade_datetime() is None         # unless TRADE_DT and TRADE_TM both exist
 
+detail = client.get_station_detail("A0010207")
+detail_record = detail.to_normalized(endpoint="detailById.do")
+assert isinstance(detail_record, NormalizedFuelStationDetail)
+assert detail_record.provider_station_id == detail.provider_station_id
+assert detail_record.brand_code == "SKE"
+assert detail_record.sub_brand_code is None
+assert detail_record.station_type.value == "N"         # LPG_YN 업종구분
+assert detail_record.sigun_code == "0113"
+assert detail_record.has_carwash is True
+assert detail_record.is_kpetro is False                # 품질인증 여부
+assert isinstance(detail_record.prices[0], NormalizedFuelStationDetailPrice)
+assert detail_record.prices[0].provider_station_id == "A0010207"
+assert detail_record.prices[0].provider_product_code == "B027"
+assert detail_record.prices[0].fuel_type.value == "gasoline"
+
 area = client.get_area_codes("01")[0]
 area_record = area.to_normalized()
 assert isinstance(area_record, NormalizedFuelRegionCode)
@@ -723,6 +740,8 @@ payload = station_record.model_dump(mode="json")  # Pydantic JSON mode
 
 `NormalizedFuelAverage.price_datetime()`는 평균가처럼 날짜만 있는 record를 KST 자정의 timezone-aware `datetime`으로 반환합니다. `NormalizedFuelStation.trade_datetime()`는 `trade_date`와 `trade_time`이 모두 있을 때만 KST timezone-aware `datetime`을 반환하고, 둘 중 하나라도 없으면 `None`을 반환합니다.
 
+`NormalizedFuelStationDetail`은 `detailById.do`의 주유소 단위 정보를 보존합니다. station id/name, brand/sub-brand code, `StationType`, sigun code, 주소, 전화번호, KATEC/WGS84 좌표, 편의시설 flag, `is_kpetro`, nested `NormalizedFuelStationDetailPrice` 가격 목록, JSON-safe raw payload를 제공합니다.
+
 `NormalizedFuelRegionCode`는 OpiNet 지역 코드의 level, parent sido, BJD sido prefix까지만 제공합니다. OpiNet 시군구 4자리 code를 법정동 10자리 code로 자동 변환하지 않습니다.
 
 ### PEP 561 typing
@@ -735,3 +754,4 @@ pyopinet은 PEP 561 typed package입니다. 배포 산출물에는 `opinet/py.ty
 |---|---|
 | 2026-05-06 (rev5) | `opinet.normalized` Pydantic DTO layer 추가. `NormalizedFuelAverage`, `NormalizedFuelStation`, `NormalizedFuelRegionCode`, KST datetime helper, JSON-safe raw 변환 helper, 모델별 `to_normalized()` 문서화. |
 | 2026-05-06 (rev6) | PEP 561 `py.typed` marker와 package data 설정 추가. wheel/sdist 설치 후 import와 downstream mypy smoke 테스트 추가. |
+| 2026-05-07 (rev7) | `StationDetail.to_normalized()`와 `NormalizedFuelStationDetail`, `NormalizedFuelStationDetailPrice` DTO 추가. |

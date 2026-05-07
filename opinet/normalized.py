@@ -10,11 +10,11 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict
 
-from .codes import FuelType
+from .codes import FuelType, StationType
 from .models import StationCoordinates
 
 if TYPE_CHECKING:
-    from .models import AreaCode, AvgPrice, Station
+    from .models import AreaCode, AvgPrice, OilPrice, Station, StationDetail
 
 JsonValue: TypeAlias = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
 
@@ -104,6 +104,52 @@ class NormalizedFuelStation(_NormalizedModel):
         return datetime.combine(self.trade_date, self.trade_time, tzinfo=_coerce_tz(tz))
 
 
+class NormalizedFuelStationDetailPrice(_NormalizedModel):
+    """Normalized product price row within a station detail record."""
+
+    provider: Literal["opinet"] = PROVIDER
+    provider_endpoint: str
+    provider_station_id: str
+    provider_station_name: str
+    provider_product_code: str
+    fuel_type: FuelType
+    price: float | None
+    trade_date: date
+    trade_time: time
+    raw: dict[str, Any]
+
+    def trade_datetime(self, tz: str | tzinfo = DEFAULT_TIMEZONE) -> datetime:
+        """Return a timezone-aware trade datetime for this price row."""
+        return datetime.combine(self.trade_date, self.trade_time, tzinfo=_coerce_tz(tz))
+
+
+class NormalizedFuelStationDetail(_NormalizedModel):
+    """Normalized fuel station detail record."""
+
+    provider: Literal["opinet"] = PROVIDER
+    provider_endpoint: str
+    provider_station_id: str
+    provider_station_name: str
+    brand_code: str | None
+    sub_brand_code: str | None
+    station_type: StationType
+    sigun_code: str
+    address_jibun: str | None
+    address_road: str | None
+    tel: str | None
+    coordinates: StationCoordinates
+    katec_x: float
+    katec_y: float
+    lon: float
+    lat: float
+    has_maintenance: bool
+    has_carwash: bool
+    has_cvs: bool
+    is_kpetro: bool
+    prices: tuple[NormalizedFuelStationDetailPrice, ...]
+    raw: dict[str, Any]
+
+
 class NormalizedFuelRegionCode(_NormalizedModel):
     """Normalized Opinet region code record."""
 
@@ -154,6 +200,58 @@ def normalize_station(station: Station, *, endpoint: str) -> NormalizedFuelStati
         trade_date=station.trade_date,
         trade_time=station.trade_time,
         raw=_json_safe_raw_dict(station.raw),
+    )
+
+
+def normalize_station_detail(
+    detail: StationDetail,
+    *,
+    endpoint: str = "detailById.do",
+) -> NormalizedFuelStationDetail:
+    """Build a normalized station-detail record from ``StationDetail``."""
+    return NormalizedFuelStationDetail(
+        provider_endpoint=endpoint,
+        provider_station_id=detail.provider_station_id,
+        provider_station_name=detail.name,
+        brand_code=detail.brand_code,
+        sub_brand_code=detail.sub_brand_code,
+        station_type=detail.station_type,
+        sigun_code=detail.sigun_code,
+        address_jibun=detail.address_jibun,
+        address_road=detail.address_road,
+        tel=detail.tel,
+        coordinates=detail.coordinates,
+        katec_x=detail.katec_x,
+        katec_y=detail.katec_y,
+        lon=detail.lon,
+        lat=detail.lat,
+        has_maintenance=detail.has_maintenance,
+        has_carwash=detail.has_carwash,
+        has_cvs=detail.has_cvs,
+        is_kpetro=detail.is_kpetro,
+        prices=tuple(
+            _normalize_station_detail_price(price, endpoint=endpoint, detail=detail) for price in detail.prices
+        ),
+        raw=_json_safe_raw_dict(detail.raw),
+    )
+
+
+def _normalize_station_detail_price(
+    price: OilPrice,
+    *,
+    endpoint: str,
+    detail: StationDetail,
+) -> NormalizedFuelStationDetailPrice:
+    return NormalizedFuelStationDetailPrice(
+        provider_endpoint=endpoint,
+        provider_station_id=detail.provider_station_id,
+        provider_station_name=detail.name,
+        provider_product_code=price.provider_product_code,
+        fuel_type=price.fuel_type,
+        price=price.price,
+        trade_date=price.trade_date,
+        trade_time=price.trade_time,
+        raw=_json_safe_raw_dict(price.raw),
     )
 
 

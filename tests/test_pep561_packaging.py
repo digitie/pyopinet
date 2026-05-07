@@ -78,11 +78,18 @@ def test_built_distribution_install_import_and_downstream_mypy(
     import_smoke = tmp_path / f"import_smoke_{dist_kind}.py"
     import_smoke.write_text(
         """
-from datetime import date
+from datetime import date, time
 
 import opinet
 import opinet.normalized
-from opinet import FuelType, NormalizedFuelAverage
+from opinet import (
+    FuelType,
+    NormalizedFuelAverage,
+    NormalizedFuelStationDetail,
+    NormalizedFuelStationDetailPrice,
+    StationCoordinates,
+    StationType,
+)
 
 record = NormalizedFuelAverage(
     provider_endpoint="avgAllPrice.do",
@@ -94,8 +101,44 @@ record = NormalizedFuelAverage(
     diff=-0.23,
     raw={"PRICE": "1667.33"},
 )
+price = NormalizedFuelStationDetailPrice(
+    provider_endpoint="detailById.do",
+    provider_station_id="A0010207",
+    provider_station_name="SK station",
+    provider_product_code="B027",
+    fuel_type=FuelType.GASOLINE,
+    price=1745.0,
+    trade_date=date(2025, 7, 23),
+    trade_time=time(14, 56, 18),
+    raw={"PRICE": "1745"},
+)
+detail = NormalizedFuelStationDetail(
+    provider_endpoint="detailById.do",
+    provider_station_id="A0010207",
+    provider_station_name="SK station",
+    brand_code="SKE",
+    sub_brand_code=None,
+    station_type=StationType.GAS_STATION,
+    sigun_code="0113",
+    address_jibun="서울 강남구 역삼동 834-47",
+    address_road="서울 강남구 역삼로 142",
+    tel="02-562-4855",
+    coordinates=StationCoordinates.from_values(314871.8, 544012.0, 127.0381, 37.5006),
+    katec_x=314871.8,
+    katec_y=544012.0,
+    lon=127.0381,
+    lat=37.5006,
+    has_maintenance=True,
+    has_carwash=True,
+    has_cvs=False,
+    is_kpetro=False,
+    prices=(price,),
+    raw={"UNI_ID": "A0010207"},
+)
 assert opinet.normalized.NormalizedFuelAverage is NormalizedFuelAverage
+assert opinet.normalized.NormalizedFuelStationDetail is NormalizedFuelStationDetail
 assert record.provider == "opinet"
+assert detail.prices[0].provider_product_code == "B027"
 assert record.model_dump(mode="json")["trade_date"] == "2025-07-23"
 """.lstrip(),
         encoding="utf-8",
@@ -105,9 +148,16 @@ assert record.model_dump(mode="json")["trade_date"] == "2025-07-23"
     downstream = tmp_path / f"downstream_mypy_{dist_kind}.py"
     downstream.write_text(
         """
-from datetime import date
+from datetime import date, time
 
-from opinet import FuelType, NormalizedFuelAverage
+from opinet import (
+    FuelType,
+    NormalizedFuelAverage,
+    NormalizedFuelStationDetail,
+    NormalizedFuelStationDetailPrice,
+    StationCoordinates,
+    StationType,
+)
 from opinet.normalized import to_json_safe_raw
 
 avg = NormalizedFuelAverage(
@@ -120,17 +170,55 @@ avg = NormalizedFuelAverage(
     diff=-0.23,
     raw={"PRICE": "1667.33"},
 )
+price_row = NormalizedFuelStationDetailPrice(
+    provider_endpoint="detailById.do",
+    provider_station_id="A0010207",
+    provider_station_name="SK station",
+    provider_product_code="B027",
+    fuel_type=FuelType.GASOLINE,
+    price=1745.0,
+    trade_date=date(2025, 7, 23),
+    trade_time=time(14, 56, 18),
+    raw={"PRICE": "1745"},
+)
+detail = NormalizedFuelStationDetail(
+    provider_endpoint="detailById.do",
+    provider_station_id="A0010207",
+    provider_station_name="SK station",
+    brand_code="SKE",
+    sub_brand_code=None,
+    station_type=StationType.GAS_STATION,
+    sigun_code="0113",
+    address_jibun="서울 강남구 역삼동 834-47",
+    address_road="서울 강남구 역삼로 142",
+    tel="02-562-4855",
+    coordinates=StationCoordinates.from_values(314871.8, 544012.0, 127.0381, 37.5006),
+    katec_x=314871.8,
+    katec_y=544012.0,
+    lon=127.0381,
+    lat=37.5006,
+    has_maintenance=True,
+    has_carwash=True,
+    has_cvs=False,
+    is_kpetro=False,
+    prices=(price_row,),
+    raw={"UNI_ID": "A0010207"},
+)
 payload = to_json_safe_raw(avg.raw)
 price: float = avg.price
 provider_code: str = avg.provider_product_code
+detail_code: str = detail.prices[0].provider_product_code
 reveal_type(avg)
+reveal_type(detail)
 reveal_type(price)
 reveal_type(provider_code)
+reveal_type(detail_code)
 reveal_type(payload)
 """.lstrip(),
         encoding="utf-8",
     )
     mypy = _run([str(python), "-m", "mypy", "--no-error-summary", str(downstream)], cwd=tmp_path)
     assert "opinet.normalized.NormalizedFuelAverage" in mypy.stdout
+    assert "opinet.normalized.NormalizedFuelStationDetail" in mypy.stdout
     assert 'Revealed type is "float"' in mypy.stdout
     assert 'Revealed type is "str"' in mypy.stdout

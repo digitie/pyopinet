@@ -13,7 +13,12 @@ from .codes import BrandCode, FuelType, ProductCode, StationType, opinet_sido_to
 from .exceptions import OpinetInvalidParameterError
 
 if TYPE_CHECKING:
-    from .normalized import NormalizedFuelAverage, NormalizedFuelRegionCode, NormalizedFuelStation
+    from .normalized import (
+        NormalizedFuelAverage,
+        NormalizedFuelRegionCode,
+        NormalizedFuelStation,
+        NormalizedFuelStationDetail,
+    )
 
 _EMPTY_RAW: Mapping[str, Any] = MappingProxyType({})
 _SENSITIVE_RAW_KEYS = frozenset({"certkey", "api_key", "apikey", "authorization", "x-api-key"})
@@ -295,8 +300,20 @@ class StationDetail:
         )
 
     @property
+    def sub_brand_code(self) -> str | None:
+        return _raw_text(self.raw, "GPOLL_DIV_CO") or _raw_text(self.raw, "GPOLL_DIV_CD") or (
+            self.sub_brand.value if self.sub_brand is not None else None
+        )
+
+    @property
     def coordinates(self) -> StationCoordinates:
         return StationCoordinates.from_values(self.katec_x, self.katec_y, self.lon, self.lat)
+
+    def to_normalized(self, *, endpoint: str = "detailById.do") -> NormalizedFuelStationDetail:
+        """Return an application-facing normalized station-detail record."""
+        from .normalized import normalize_station_detail
+
+        return normalize_station_detail(self, endpoint=endpoint)
 
 
 @dataclass(frozen=True, slots=True)
