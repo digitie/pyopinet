@@ -863,7 +863,7 @@ class OpinetNetworkError(OpinetError):
 
 - 좌표, 장소 DTO, POI 정규화처럼 다른 TripMate 라이브러리에 이미 구현된 기능은 `opinet` 안에 복제하지 않고 해당 라이브러리를 직접 의존합니다.
 - KATEC/WGS84 경계는 `pykrtour.PlaceCoordinate`와 `pykrtour.KatecPoint`를 파라미터와 리턴 모델에 그대로 노출합니다. 단순 wrapper, compatibility alias, mirror dataclass는 만들지 않습니다.
-- 오피넷 4자리 시군구 코드를 법정동 시군구 코드로 해석해야 하면 코드 자체를 변환하지 않고 `pyvworld.VworldClient.search_district(..., category="L2")` 결과의 5자리 `id`를 명시 매칭합니다.
+- 오피넷 4자리 시군구 코드를 법정동 시군구 코드로 해석해야 하면 코드 자체를 변환하지 않고 `pyvworld.VworldClient.search_district(..., category="L2")` 결과의 5자리 `id`를 `pykrtour.AddressRegion`으로 명시 매칭합니다.
 - 이 원칙은 "최소 수정"보다 우선합니다. 직접 의존으로 공개 API가 바뀌면 README, 테스트, 타입 힌트를 함께 갱신해 새 계약을 명확히 합니다.
 - `SIGUNCD`는 오피넷 자체 4자리 시군구 코드입니다. 법정동 5자리 시군구 코드나 10자리 법정동코드와 일치한다고 추정하지 않습니다.
 

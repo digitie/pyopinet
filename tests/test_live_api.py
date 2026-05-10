@@ -4,7 +4,7 @@ import sys
 import time
 
 import pytest
-from pykrtour import PlaceCoordinate
+from pykrtour import AddressRegion, PlaceCoordinate
 
 from opinet import AreaCode, AvgPrice, ProductCode, Station, StationDetail
 from opinet.vworld import resolve_sigungu_bjd_code
@@ -79,6 +79,9 @@ def test_live_resolve_opinet_sigungu_code_with_vworld(live_client, live_vworld_c
 
     assert mapping.opinet_sigungu_code == "0113"
     assert mapping.opinet_sigungu_name == "강남구"
+    assert isinstance(mapping.bjd_region, AddressRegion)
+    assert mapping.bjd_region.sigungu_code_value == "11680"
+    assert mapping.bjd_region.administrative_label == "서울특별시 강남구"
     assert mapping.bjd_sigungu_code == "11680"
     assert mapping.vworld_title == "서울특별시 강남구"
 

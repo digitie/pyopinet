@@ -7,7 +7,6 @@ from pykrtour import PlaceCoordinate
 from opinet import (
     AreaCode,
     FuelType,
-    OpinetClient,
     ProductCode,
     fuel_type_to_product_code,
     product_code_to_fuel_type,

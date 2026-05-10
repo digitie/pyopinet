@@ -676,7 +676,9 @@ mapping = resolve_sigungu_bjd_code(
 )
 
 mapping.opinet_sigungu_name  # "강남구"
-mapping.bjd_sigungu_code     # "11680"
+mapping.bjd_region           # pykrtour.AddressRegion
+mapping.bjd_region.sigungu_code_value  # "11680"
+mapping.bjd_sigungu_code     # "11680" (derived convenience property)
 mapping.vworld_title         # "서울특별시 강남구"
 ```
 
