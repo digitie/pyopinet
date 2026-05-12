@@ -30,7 +30,7 @@ def _load_env_file(env_path: Path) -> None:
 def _load_local_env() -> None:
     """런타임 의존성을 추가하지 않고 ignore된 로컬 .env 값을 읽는다."""
     _load_env_file(PROJECT_ROOT / ".env")
-    _load_env_file(PROJECT_ROOT.parent / "pyvworld" / ".env")
+    _load_env_file(PROJECT_ROOT.parent / "python-vworld-api" / ".env")
 
 
 _load_local_env()

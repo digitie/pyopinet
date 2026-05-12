@@ -1,4 +1,4 @@
-"""pyvworld를 활용한 오피넷 지역 코드 보강 helper."""
+"""VWorld를 활용한 오피넷 지역 코드 보강 helper."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Any, Protocol
 
-from pykrtour import AddressRegion
+from kraddr.base import AddressRegion
 
 from .codes import BJD_LEGACY_TO_NEW, opinet_sido_to_bjd
 from .exceptions import OpinetInvalidParameterError, OpinetNoDataError, OpinetServerError
@@ -204,7 +204,7 @@ def resolve_sigungu_bjd_code(
 
     오피넷 `SIGUNCD`/`AREA_CD` 시군구 값은 법정동코드가 아니므로 코드 자체를
     산술 변환하지 않는다. 대신 `areaCode.do`에서 시도명과 시군구명을 얻고,
-    `pyvworld.VworldClient.search_district(..., category="L2")` 결과의 5자리
+    `vworld.VworldClient.search_district(..., category="L2")` 결과의 5자리
     `id`를 명시적으로 매칭한다.
     """
 

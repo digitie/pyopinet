@@ -4,7 +4,7 @@ import sys
 import time
 
 import pytest
-from pykrtour import AddressRegion, PlaceCoordinate
+from kraddr.base import AddressRegion, PlaceCoordinate
 
 from opinet import AreaCode, AvgPrice, ProductCode, Station, StationDetail
 from opinet.vworld import resolve_sigungu_bjd_code
@@ -12,7 +12,7 @@ from opinet.vworld import resolve_sigungu_bjd_code
 
 pytestmark = pytest.mark.live
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-PYVWORLD_ROOT = PROJECT_ROOT.parent / "pyvworld"
+PYTHON_VWORLD_ROOT = PROJECT_ROOT.parent / "python-vworld-api"
 
 
 def _skip_if_empty(rows: list[object], endpoint: str) -> None:
@@ -41,13 +41,13 @@ def _retry_live_call(call):
 
 @pytest.fixture(scope="session")
 def live_vworld_client():
-    """같은 workspace의 pyvworld와 VWORLD_API_KEY로 VWorld live client를 만든다."""
-    if PYVWORLD_ROOT.exists():
-        sys.path.insert(0, str(PYVWORLD_ROOT))
+    """같은 workspace의 python-vworld-api와 VWORLD_API_KEY로 VWorld live client를 만든다."""
+    if PYTHON_VWORLD_ROOT.exists():
+        sys.path.insert(0, str(PYTHON_VWORLD_ROOT / "src"))
     try:
-        from pyvworld import VworldClient
+        from vworld import VworldClient
     except ImportError:
-        pytest.skip("pyvworld is required for VWorld live integration tests")
+        pytest.skip("python-vworld-api is required for VWorld live integration tests")
     client = VworldClient.from_env(domain="", timeout=20, max_retries=1, retry_backoff=0)
     if not client.api_key:
         pytest.skip("VWORLD_API_KEY is required for VWorld live integration tests")

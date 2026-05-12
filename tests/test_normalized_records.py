@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import pytest
 import responses
 from pydantic import BaseModel, ValidationError
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 
 from opinet import (
     FuelType,

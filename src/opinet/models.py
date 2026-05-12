@@ -9,7 +9,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Any, Literal, Mapping
 from zoneinfo import ZoneInfo
 
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 
 from .codes import BrandCode, FuelType, ProductCode, StationType, opinet_sido_to_bjd, product_code_to_fuel_type
 from .exceptions import OpinetInvalidParameterError

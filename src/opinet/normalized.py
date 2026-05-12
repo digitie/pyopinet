@@ -9,7 +9,7 @@ from typing import Any, Literal, TypeAlias, TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 
 from .codes import FuelType, StationType
 

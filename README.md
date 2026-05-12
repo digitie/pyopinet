@@ -77,8 +77,8 @@ for row in client.get_national_average_price():
     assert isinstance(row.product_code, ProductCode)  # "B027" → enum
     print(f"{row.product_name}: {row.price:,.2f}원 ({row.diff:+.2f}) — {row.trade_date}")
 
-# 2) 강남역 반경 3km 내 가장 싼 휘발유 5곳 — pykrtour 좌표 DTO 사용
-from pykrtour import PlaceCoordinate
+# 2) 강남역 반경 3km 내 가장 싼 휘발유 5곳 — kraddr.base 좌표 DTO 사용
+from kraddr.base import PlaceCoordinate
 
 stations = client.search_stations_around(
     coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),  # 강남역 위경도
@@ -87,7 +87,7 @@ stations = client.search_stations_around(
     sort=SortOrder.PRICE,
 )
 for s in stations[:5]:
-    # coordinate는 pykrtour.PlaceCoordinate, KATEC 원본은 KatecPoint
+    # coordinate는 kraddr.base.PlaceCoordinate, KATEC 원본은 KatecPoint
     print(f"{s.name}: {s.price:,.0f}원, {s.distance_m:.0f}m, "
           f"({s.coordinate.lon:.4f}, {s.coordinate.lat:.4f})")
 
@@ -185,12 +185,12 @@ is_alddle(BrandCode.SKE)  # False
 
 오피넷 API는 모든 좌표를 **KATEC** (오피넷 자체 TM 좌표계, m 단위)로 주고받습니다. 일반적인 위경도(WGS84)와 다릅니다.
 
-본 라이브러리는 사용자 입력을 `pykrtour.PlaceCoordinate`로 받고, KATEC 변환은 `pykrtour`의 좌표 객체가 처리합니다.
+본 라이브러리는 사용자 입력을 `kraddr.base.PlaceCoordinate`로 받고, KATEC 변환은 `kraddr.base`의 좌표 객체가 처리합니다.
 
 ```python
-from pykrtour import PlaceCoordinate
+from kraddr.base import PlaceCoordinate
 
-# 입력: pykrtour.PlaceCoordinate (WGS84 lon/lat)
+# 입력: kraddr.base.PlaceCoordinate (WGS84 lon/lat)
 stations = client.search_stations_around(
     coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),
     ...
@@ -198,16 +198,16 @@ stations = client.search_stations_around(
 
 # 응답 모델: PlaceCoordinate + KATEC 원본 둘 다 들어있음
 station = stations[0]
-station.coordinate                # pykrtour.PlaceCoordinate
-station.katec_coordinate          # pykrtour.KatecPoint
+station.coordinate                # kraddr.base.PlaceCoordinate
+station.katec_coordinate          # kraddr.base.KatecPoint
 station.lon, station.lat          # 호환용 WGS84 float
 station.katec_x, station.katec_y  # 호환용 KATEC float
 ```
 
-직접 변환이 필요하면 `pykrtour`를 바로 사용합니다:
+직접 변환이 필요하면 `kraddr.base`를 바로 사용합니다:
 
 ```python
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 
 x, y = PlaceCoordinate(lon=127.0276, lat=37.4979).to_katec().as_x_y()
 coord = PlaceCoordinate.from_katec(KatecPoint(314871.80, 544012.00))  # SK서광주유소
@@ -277,7 +277,7 @@ bjd_sido_to_opinet("52")  # → "06" (전북특별자치도 신코드 → 오피
 ## 에러 처리
 
 ```python
-from pykrtour import PlaceCoordinate
+from kraddr.base import PlaceCoordinate
 from opinet.exceptions import (
     OpinetError,                  # 공통 베이스
     OpinetAuthError,              # 인증 실패 (Invalid Key, 401, 403)
@@ -442,10 +442,10 @@ skill 파일은 다음을 정의합니다:
 **런타임:**
 - `requests` ≥ 2.28
 - `pydantic` ≥ 2.0
-- `pykrtour[geo]` ≥ 0.1.0
+- `python-kraddr-base[geo]` ≥ 0.1.5
 
 **선택 기능:**
-- `pyvworld` ≥ 0.1.0 (`pip install python-opinet-api[vworld]`, VWorld로 시군구 법정동코드 매핑을 할 때)
+- `python-vworld-api` ≥ 0.1.0 (`pip install python-opinet-api[vworld]`, VWorld로 시군구 법정동코드 매핑을 할 때)
 
 **개발:**
 - `pytest` ≥ 7.0
@@ -634,7 +634,7 @@ station.brand_code             # OpiNet POLL_DIV_CO/POLL_DIV_CD 원문 code
 
 ### 좌표 value object
 
-기존 호환 필드인 `station.katec_x`, `station.katec_y`, `station.lon`, `station.lat`는 그대로 유지됩니다. 새 코드에서는 `pykrtour`의 `PlaceCoordinate`와 `KatecPoint`를 직접 사용합니다.
+기존 호환 필드인 `station.katec_x`, `station.katec_y`, `station.lon`, `station.lat`는 그대로 유지됩니다. 새 코드에서는 `kraddr.base`의 `PlaceCoordinate`와 `KatecPoint`를 직접 사용합니다.
 
 ```python
 coord = station.coordinate
@@ -647,7 +647,7 @@ coord.as_lon_lat()      # (lon, lat)
 katec.as_x_y()          # (x, y)
 ```
 
-`PlaceCoordinate`와 `KatecPoint`는 `pykrtour`가 제공합니다. WGS84 축 순서는 `PlaceCoordinate(lon=..., lat=...)`입니다.
+`PlaceCoordinate`와 `KatecPoint`는 `kraddr.base`가 제공합니다. WGS84 축 순서는 `PlaceCoordinate(lon=..., lat=...)`입니다.
 
 ### AreaCode helper
 
@@ -666,7 +666,7 @@ area.bjd_sido_prefix   # "11"
 VWorld 행정구역 검색을 함께 쓰면 오피넷 시군구 코드를 5자리 법정동 시군구 코드로 명시 매핑할 수 있습니다.
 
 ```python
-from pyvworld import VworldClient
+from vworld import VworldClient
 from opinet.vworld import resolve_sigungu_bjd_code
 
 vworld = VworldClient.from_env(domain="")
@@ -677,7 +677,7 @@ mapping = resolve_sigungu_bjd_code(
 )
 
 mapping.opinet_sigungu_name  # "강남구"
-mapping.bjd_region           # pykrtour.AddressRegion
+mapping.bjd_region           # kraddr.base.AddressRegion
 mapping.bjd_region.sigungu_code_value  # "11680"
 mapping.bjd_sigungu_code     # "11680" (derived convenience property)
 mapping.vworld_title         # "서울특별시 강남구"

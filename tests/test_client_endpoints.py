@@ -3,7 +3,7 @@ from urllib.parse import parse_qs, urlparse
 
 import pytest
 import responses
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 
 from opinet import BrandCode, OpinetClient, ProductCode, SortOrder, StationType
 from opinet.exceptions import OpinetAuthError, OpinetInvalidParameterError, OpinetNoDataError, OpinetServerError

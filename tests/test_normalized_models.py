@@ -2,7 +2,7 @@ from datetime import date, time
 
 import pytest
 import responses
-from pykrtour import PlaceCoordinate
+from kraddr.base import PlaceCoordinate
 
 from opinet import (
     AreaCode,

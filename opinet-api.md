@@ -760,10 +760,10 @@ PDF 가이드북에는 무료 API 22종이 명시되어 있지만, 공식 사이
 +proj=tmerc +lat_0=38 +lon_0=128 +k=0.9999 +x_0=400000 +y_0=600000 +ellps=bessel +units=m +towgs84=-115.80,474.99,674.11,1.16,-2.31,-1.63,6.43 +no_defs
 ```
 
-### 5.2 Python 구현 (`pykrtour`)
+### 5.2 Python 구현 (`kraddr.base`)
 
 ```python
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 
 x, y = PlaceCoordinate(lon=127.0276, lat=37.4979).to_katec().as_x_y()
 coord = PlaceCoordinate.from_katec(KatecPoint(314871.80, 544012.00))
@@ -862,8 +862,8 @@ class OpinetNetworkError(OpinetError):
 ### 7.0.1 공통 라이브러리 직접 사용
 
 - 좌표, 장소 DTO, POI 정규화처럼 다른 TripMate 라이브러리에 이미 구현된 기능은 `opinet` 안에 복제하지 않고 해당 라이브러리를 직접 의존합니다.
-- KATEC/WGS84 경계는 `pykrtour.PlaceCoordinate`와 `pykrtour.KatecPoint`를 파라미터와 리턴 모델에 그대로 노출합니다. 단순 wrapper, compatibility alias, mirror dataclass는 만들지 않습니다.
-- 오피넷 4자리 시군구 코드를 법정동 시군구 코드로 해석해야 하면 코드 자체를 변환하지 않고 `pyvworld.VworldClient.search_district(..., category="L2")` 결과의 5자리 `id`를 `pykrtour.AddressRegion`으로 명시 매칭합니다.
+- KATEC/WGS84 경계는 `kraddr.base.PlaceCoordinate`와 `kraddr.base.KatecPoint`를 파라미터와 리턴 모델에 그대로 노출합니다. 단순 wrapper, compatibility alias, mirror dataclass는 만들지 않습니다.
+- 오피넷 4자리 시군구 코드를 법정동 시군구 코드로 해석해야 하면 코드 자체를 변환하지 않고 `vworld.VworldClient.search_district(..., category="L2")` 결과의 5자리 `id`를 `kraddr.base.AddressRegion`으로 명시 매칭합니다.
 - 이 원칙은 "최소 수정"보다 우선합니다. 직접 의존으로 공개 API가 바뀌면 README, 테스트, 타입 힌트를 함께 갱신해 새 계약을 명확히 합니다.
 - `SIGUNCD`는 오피넷 자체 4자리 시군구 코드입니다. 법정동 5자리 시군구 코드나 10자리 법정동코드와 일치한다고 추정하지 않습니다.
 
@@ -881,7 +881,7 @@ python-opinet-api/
 │       ├── codes.py         # ProductCode, BrandCode, SortOrder, StationType (StrEnum)
 │       │                    # + 시도코드 ↔ 법정동코드 매핑
 │       ├── models.py        # frozen slots dataclasses (Python 네이티브 타입)
-│       ├── vworld.py        # pyvworld district 검색으로 시군구 법정동코드 명시 매핑
+│       ├── vworld.py        # VWorld district 검색으로 시군구 법정동코드 명시 매핑
 │       └── experimental/    # PDF 가이드북 17종 (검증되지 않음)
 │           ├── __init__.py
 │           └── client.py
@@ -1086,7 +1086,7 @@ def search_stations_around(
     """주어진 좌표 반경 내 주유소를 검색한다.
 
     오피넷 ``aroundAll.do`` 엔드포인트(apiId=3)를 호출한다. 입력 좌표는
-    ``pykrtour.PlaceCoordinate`` 또는 KATEC 둘 중 하나로만 받을 수 있고,
+    ``kraddr.base.PlaceCoordinate`` 또는 KATEC 둘 중 하나로만 받을 수 있고,
     응답의 KATEC 좌표는 자동으로 WGS84로 변환되어
     ``Station.coordinate``에 채워진다.
 
@@ -1095,9 +1095,9 @@ def search_stations_around(
     ``brand``는 ``BrandCode`` enum.
 
     Args:
-        coordinate: ``pykrtour.PlaceCoordinate`` WGS84 좌표. 내부에서 KATEC으로
+        coordinate: ``kraddr.base.PlaceCoordinate`` WGS84 좌표. 내부에서 KATEC으로
             변환되어 API에 전달된다.
-        katec: ``pykrtour.KatecPoint`` KATEC 좌표(m). 변환 없이 그대로 전달.
+        katec: ``kraddr.base.KatecPoint`` KATEC 좌표(m). 변환 없이 그대로 전달.
         radius_m: 검색 반경(미터). 1 ≤ radius_m ≤ 5000.
         prodcd: 제품 종류. 기본 ``ProductCode.GASOLINE`` (B027 휘발유).
         sort: 정렬 기준. ``SortOrder.PRICE`` 또는 ``SortOrder.DISTANCE``.
@@ -1452,9 +1452,9 @@ def test_all_17_sidos_mapped():
 ```
 
 ```python
-# pykrtour/tests/test_coordinates.py
+# python-kraddr-base/tests/test_coordinates.py
 import pytest
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 
 
 @pytest.mark.parametrize("lon,lat", [

@@ -6,7 +6,7 @@ import os
 from datetime import date, time
 from typing import TYPE_CHECKING, Any
 
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 
 from ._convert import strip_or_none, to_bool_yn, to_date, to_float_or_none, to_time
 from ._http import _OpinetHttp
@@ -209,7 +209,7 @@ class OpinetClient:
         """주어진 좌표 반경 내 주유소를 검색한다.
 
         ``aroundAll.do``(apiId=3)를 호출한다. 공개 입력은
-        ``pykrtour.PlaceCoordinate`` 또는 ``pykrtour.KatecPoint``만 받으며,
+        ``kraddr.base.PlaceCoordinate`` 또는 ``kraddr.base.KatecPoint``만 받으며,
         응답 모델에는 ``coordinate``와 KATEC 원본 좌표가 모두 들어간다.
         """
         if (coordinate is None) == (katec is None):
@@ -283,7 +283,7 @@ class OpinetClient:
         *,
         vworld_client: Any,
     ) -> OpinetSigunguBjdMapping:
-        """pyvworld 행정구역 검색으로 오피넷 시군구 코드를 법정동 코드로 해석한다."""
+        """VWorld 행정구역 검색으로 오피넷 시군구 코드를 법정동 코드로 해석한다."""
 
         from .vworld import resolve_sigungu_bjd_code
 

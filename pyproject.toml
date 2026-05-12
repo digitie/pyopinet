@@ -12,12 +12,12 @@ license = { text = "GPL-3.0-or-later" }
 dependencies = [
     "requests>=2.28",
     "pydantic>=2.0",
-    "pykrtour[geo]>=0.1.0",
+    "python-kraddr-base[geo]>=0.1.5",
 ]
 
 [project.optional-dependencies]
 vworld = [
-    "pyvworld>=0.1.0",
+    "python-vworld-api>=0.1.0",
 ]
 dev = [
     "build",
@@ -49,4 +49,4 @@ markers = [
 ]
 
 [tool.mypy]
-mypy_path = "../pykrtour"
+mypy_path = "../python-kraddr-base/src"

@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-PYKRTOUR_ROOT = PROJECT_ROOT.parent / "pykrtour"
+KRADDR_BASE_ROOT = PROJECT_ROOT.parent / "python-kraddr-base"
 
 
 def _run(args: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -71,8 +71,8 @@ def test_built_distribution_install_import_and_downstream_mypy(
     venv.EnvBuilder(with_pip=True, system_site_packages=True).create(venv_dir)
     python = _venv_python(venv_dir)
 
-    if PYKRTOUR_ROOT.exists():
-        _run([str(python), "-m", "pip", "install", "--no-deps", str(PYKRTOUR_ROOT)], cwd=tmp_path)
+    if KRADDR_BASE_ROOT.exists():
+        _run([str(python), "-m", "pip", "install", "--no-deps", str(KRADDR_BASE_ROOT)], cwd=tmp_path)
 
     install_args = [str(python), "-m", "pip", "install", "--no-deps"]
     if dist_kind == "sdist":
@@ -86,7 +86,7 @@ from datetime import date, time
 
 import opinet
 import opinet.normalized
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 from opinet import (
     FuelType,
     NormalizedFuelAverage,
@@ -155,7 +155,7 @@ assert record.model_dump(mode="json")["trade_date"] == "2025-07-23"
         """
 from datetime import date, time
 
-from pykrtour import KatecPoint, PlaceCoordinate
+from kraddr.base import KatecPoint, PlaceCoordinate
 from opinet import (
     FuelType,
     NormalizedFuelAverage,

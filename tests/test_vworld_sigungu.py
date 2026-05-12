@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 import pytest
-from pykrtour import AddressRegion
+from kraddr.base import AddressRegion
 
 from opinet.exceptions import OpinetInvalidParameterError, OpinetNoDataError
 from opinet.models import AreaCode
