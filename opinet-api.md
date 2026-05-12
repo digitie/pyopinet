@@ -83,12 +83,12 @@
    - 사용자는 둘 중 어느 것이든 직접 접근 가능. 변환은 모델 생성 시 1회.
 
 7. **명시적 변환 헬퍼는 한 곳에서 관리.**
-   - `opinet/_parse.py` 또는 `opinet/_convert.py`에 `_to_date`, `_to_time`, `_to_float_or_none`, `_to_bool_yn`, `_strip_or_none` 등을 두고, 모든 모델 생성자가 이를 호출.
+   - `src/opinet/_parse.py` 또는 `src/opinet/_convert.py`에 `_to_date`, `_to_time`, `_to_float_or_none`, `_to_bool_yn`, `_strip_or_none` 등을 두고, 모든 모델 생성자가 이를 호출.
 
 #### 변환 헬퍼 예시
 
 ```python
-# opinet/_convert.py
+# src/opinet/_convert.py
 from datetime import date, datetime, time
 from typing import Any
 
@@ -249,7 +249,7 @@ def strip_or_none(s: Any) -> str | None:
 4. **2023~2024년의 특별자치도 출범으로 강원/전북의 법정동 시도코드가 변경**될 수 있음. 운영 환경에서는 행정안전부 변경 공고를 추적하거나 정기적으로 매핑을 재검증해야 함.
 5. **오피넷의 `AREA_CD`는 변하지 않은 것으로 추정** (특별자치도 변경 후에도 `03`, `06` 그대로 사용). 본 명세서 작성 시점에는 그대로지만, 라이브러리 구현 시 `get_area_codes()`로 최신값 확인 권장.
 
-#### 라이브러리 구현 가이드 (`opinet/codes.py`)
+#### 라이브러리 구현 가이드 (`src/opinet/codes.py`)
 
 ```python
 # 양방향 매핑은 frozen dict로 (변경 시 의도적인 갱신을 강제)
@@ -803,7 +803,7 @@ coord = PlaceCoordinate.from_katec(KatecPoint(314871.80, 544012.00))
 ### 6.2 Python 예외 계층
 
 ```python
-# opinet/exceptions.py
+# src/opinet/exceptions.py
 
 class OpinetError(Exception):
     """모든 오피넷 API 예외의 베이스."""
@@ -852,7 +852,7 @@ class OpinetNetworkError(OpinetError):
 
 ### 7.0 문서와 경로 표기
 
-- 저장소 문서에서 파일 위치를 언급할 때는 프로젝트 루트 기준 상대 경로를 사용합니다. 예: `opinet/client.py`, `tests/fixtures/avg_all_price.json`.
+- 저장소 문서에서 파일 위치를 언급할 때는 프로젝트 루트 기준 상대 경로를 사용합니다. 예: `src/opinet/client.py`, `tests/fixtures/avg_all_price.json`.
 - 로컬 절대 경로는 저장소 문서에 남기지 않습니다.
 - Python 내부 문서(docstring과 유지보수용 주석)는 한글로 작성합니다.
 - API 필드명, 엔드포인트, enum 값처럼 원문 자체가 의미 있는 값은 그대로 둡니다.
@@ -870,20 +870,21 @@ class OpinetNetworkError(OpinetError):
 ### 7.1 패키지 구조
 
 ```
-opinet/
-├── opinet/
-│   ├── __init__.py          # 공개 API 재노출
-│   ├── client.py            # OpinetClient (5개 공식 API)
-│   ├── _http.py             # HTTP 헬퍼 + 에러 매핑
-│   ├── _convert.py          # 타입 변환 헬퍼 (to_date, to_time, to_float_or_none, ...)
-│   ├── exceptions.py        # 예외 계층
-│   ├── codes.py             # ProductCode, BrandCode, SortOrder, StationType (StrEnum)
-│   │                        # + 시도코드 ↔ 법정동코드 매핑
-│   ├── models.py            # frozen slots dataclasses (Python 네이티브 타입)
-│   ├── vworld.py            # pyvworld district 검색으로 시군구 법정동코드 명시 매핑
-│   └── experimental/        # PDF 가이드북 17종 (검증되지 않음)
-│       ├── __init__.py
-│       └── client.py
+python-opinet-api/
+├── src/
+│   └── opinet/
+│       ├── __init__.py      # 공개 API 재노출
+│       ├── client.py        # OpinetClient (5개 공식 API)
+│       ├── _http.py         # HTTP 헬퍼 + 에러 매핑
+│       ├── _convert.py      # 타입 변환 헬퍼 (to_date, to_time, to_float_or_none, ...)
+│       ├── exceptions.py    # 예외 계층
+│       ├── codes.py         # ProductCode, BrandCode, SortOrder, StationType (StrEnum)
+│       │                    # + 시도코드 ↔ 법정동코드 매핑
+│       ├── models.py        # frozen slots dataclasses (Python 네이티브 타입)
+│       ├── vworld.py        # pyvworld district 검색으로 시군구 법정동코드 명시 매핑
+│       └── experimental/    # PDF 가이드북 17종 (검증되지 않음)
+│           ├── __init__.py
+│           └── client.py
 ├── tests/
 │   ├── conftest.py
 │   ├── fixtures/            # 실제 응답 JSON

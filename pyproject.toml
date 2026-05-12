@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "opinet"
+name = "python-opinet-api"
 version = "0.1.0"
 description = "Unofficial Python client for the Korean Opinet fuel price API"
 readme = "README.md"
@@ -30,7 +30,11 @@ dev = [
     "wheel",
 ]
 
+[tool.setuptools]
+package-dir = {"" = "src"}
+
 [tool.setuptools.packages.find]
+where = ["src"]
 include = ["opinet*"]
 
 [tool.setuptools.package-data]
@@ -38,6 +42,7 @@ opinet = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = "-ra"
 markers = [
     "live: tests that call the real Opinet API and require OPINET_API_KEY",

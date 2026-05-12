@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## 역할
-- 이 파일은 Codex/agent가 pyopinet 작업 전에 읽는 최소 지침이다.
+- 이 파일은 Codex/agent가 python-opinet-api 작업 전에 읽는 최소 지침이다.
 - 상세 API 명세와 구현 규칙은 작업 주제에 맞춰 `opinet-api.md`와 `SKILL.md`를 추가로 읽는다.
 - 루트 기준과 하위 문서가 충돌하면 아래 우선순위를 따른다.
 
@@ -15,7 +15,7 @@
 7. 최소한의, 되돌릴 수 있는 가정
 
 ## 프로젝트 기준
-- pyopinet은 한국석유공사 오피넷(Opinet) 오픈 API의 비공식 Python 클라이언트 라이브러리다.
+- python-opinet-api는 한국석유공사 오피넷(Opinet) 오픈 API의 비공식 Python 클라이언트 라이브러리다.
 - 저장소의 1차 범위는 공식 오픈 API 페이지에 등재된 5개 엔드포인트 구현이다.
 - PDF 가이드북의 추가 API는 검증 전까지 `opinet.experimental`에 둔다.
 - Python 3.11 이상을 기준으로 하며 `dataclass(frozen=True, slots=True)`와 `StrEnum`을 사용한다.
@@ -44,17 +44,17 @@
 - API 필드, 코드표, 응답 예시, 테스트 전략: `opinet-api.md`
 - 에이전트 구현 규칙과 함정 목록: `SKILL.md`
 - 패키지/의존성/테스트 설정: `pyproject.toml`
-- 공식 클라이언트 진입점: `opinet/client.py`
-- HTTP/에러 매핑: `opinet/_http.py`
-- 타입 변환: `opinet/_convert.py`
-- 코드표/enum/시도 매핑: `opinet/codes.py`
+- 공식 클라이언트 진입점: `src/opinet/client.py`
+- HTTP/에러 매핑: `src/opinet/_http.py`
+- 타입 변환: `src/opinet/_convert.py`
+- 코드표/enum/시도 매핑: `src/opinet/codes.py`
 - 공통 좌표/장소 DTO: `pykrtour.PlaceCoordinate`, `pykrtour.KatecPoint`
-- 응답 모델: `opinet/models.py`
-- 미검증 API: `opinet/experimental/`
+- 응답 모델: `src/opinet/models.py`
+- 미검증 API: `src/opinet/experimental/`
 - 테스트 fixture: `tests/fixtures/`
 
 ## 문서 작성 규칙
-- 문서에서 파일 위치를 언급할 때는 프로젝트 루트 기준 상대 경로만 쓴다. 예: `opinet/client.py`, `docs/implementation-status.md`.
+- 문서에서 파일 위치를 언급할 때는 프로젝트 루트 기준 상대 경로만 쓴다. 예: `src/opinet/client.py`, `docs/implementation-status.md`.
 - 로컬 절대 경로는 실행 로그나 임시 설명에만 쓰고 저장소 문서에는 남기지 않는다.
 - Python 내부 문서(모듈, 클래스, 함수, 메서드 docstring과 유지보수용 주석)는 한글로 작성한다.
 - API 필드명, 엔드포인트, enum 값, 외부 오류 메시지처럼 원문 자체가 의미 있는 값은 그대로 둔다.
@@ -78,13 +78,13 @@
 - 원격 API 동작이 불확실하면 실험 모듈에 두고 "Unverified" 경고를 남긴다.
 
 ## 검증 기준
-- 구조/문법 확인: `python -m compileall opinet`
+- 구조/문법 확인: `python -m compileall src/opinet tests`
 - 단위 테스트: `pytest`
 - 커버리지 목표: `pytest --cov=opinet --cov-fail-under=90`
-- 타입 검사: `python -m mypy opinet`
+- 타입 검사: `python -m mypy src/opinet`
 - 실제 API 스모크: `pytest -m live --run-live` (`OPINET_API_KEY` 필요)
 - HTTP mocking 테스트는 `responses`를 사용한다.
-- 좌표 변환 자체는 `pykrtour` 테스트에서 검증하고, `pyopinet`에서는 요청/응답 모델 경계가 `PlaceCoordinate`와 `KatecPoint`를 직접 쓰는지 검증한다.
+- 좌표 변환 자체는 `pykrtour` 테스트에서 검증하고, `python-opinet-api`에서는 요청/응답 모델 경계가 `PlaceCoordinate`와 `KatecPoint`를 직접 쓰는지 검증한다.
 - 타입 변환 테스트는 정상값, 빈 문자열/공백/None, 잘못된 포맷을 모두 포함한다.
 
 ## 반복 실수 방지

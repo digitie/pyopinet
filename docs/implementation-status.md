@@ -1,4 +1,4 @@
-# pyopinet Implementation Status
+# python-opinet-api Implementation Status
 
 이 문서는 현재 구현 상태, 검증 방법, 다음 작업자가 반복하지 말아야 할 판단을 한곳에 모읍니다.
 
@@ -19,13 +19,13 @@ PDF 가이드북의 추가 API는 아직 공식 명세 페이지가 없으므로
 ## 구현 원칙
 
 - 인증 파라미터는 `certkey`, 출력 포맷은 `out=json`입니다.
-- HTTP 상태/본문 기반 오류 매핑은 `opinet/_http.py`에 모읍니다.
+- HTTP 상태/본문 기반 오류 매핑은 `src/opinet/_http.py`에 모읍니다.
 - 엔드포인트 파라미터 오류는 HTTP 호출 전에 `OpinetInvalidParameterError`로 실패시킵니다.
 - API 응답은 모델 생성 전에 `date`, `time`, `float`, `bool`, `StrEnum`으로 변환합니다.
 - `AREA_CD`, `SIGUNCD`, `UNI_ID`, 제품 코드, 상표 코드는 정수로 변환하지 않습니다.
 - KATEC 변환은 `pykrtour.PlaceCoordinate`와 `pykrtour.KatecPoint`를 직접 사용합니다.
 - 공통 기능이 `pykrtour` 같은 다른 TripMate 라이브러리에 구현돼 있으면 최소 수정보다 직접 의존을 우선합니다. 얇은 wrapper나 mirror dataclass는 만들지 않습니다.
-- `SIGUNCD`는 오피넷 자체 4자리 시군구 코드이며 법정동 시군구 코드나 10자리 법정동코드로 추정 변환하지 않습니다. 필요하면 `opinet/vworld.py`에서 `pyvworld` district 검색 결과의 5자리 `id`를 `pykrtour.AddressRegion`으로 명시 매칭합니다.
+- `SIGUNCD`는 오피넷 자체 4자리 시군구 코드이며 법정동 시군구 코드나 10자리 법정동코드로 추정 변환하지 않습니다. 필요하면 `src/opinet/vworld.py`에서 `pyvworld` district 검색 결과의 5자리 `id`를 `pykrtour.AddressRegion`으로 명시 매칭합니다.
 - 문서에서 파일 위치는 프로젝트 루트 기준 상대 경로로 표기합니다.
 - Python 내부 문서(docstring과 유지보수용 주석)는 한글로 작성합니다. 외부 API 고유 명칭과 코드 식별자는 원문을 유지합니다.
 - 이 Windows/PowerShell 환경에서는 `rg`가 실행 권한 문제로 실패할 수 있으므로, 실패 시 `git ls-files`, `Get-ChildItem -Recurse -File`, `Select-String`으로 파일 목록과 검색을 수행합니다.
@@ -47,10 +47,10 @@ PDF 가이드북의 추가 API는 아직 공식 명세 페이지가 없으므로
 필수 검증 명령:
 
 ```bash
-python -m compileall opinet tests
+python -m compileall src/opinet tests
 python -m pytest
 python -m pytest --cov=opinet --cov-fail-under=90
-python -m mypy opinet
+python -m mypy src/opinet
 ```
 
 ## Live API 테스트 정책
@@ -88,7 +88,7 @@ pytest -m live --run-live
 - `RESULT.OIL`과 `OIL_PRICE`는 list뿐 아니라 단일 dict로 올 수 있습니다.
 - 실제 응답의 상표 필드는 `POLL_DIV_CO`, `GPOLL_DIV_CO`가 우선입니다. `*_CD`는 fallback입니다.
 - 공백 1자(`" "`)는 의미 있는 문자열이 아니라 `None`입니다.
-- 좌표 변환 정밀도는 `pykrtour` 테스트가 소유합니다. `pyopinet`에서는 오피넷 모델 경계가 `PlaceCoordinate`/`KatecPoint`를 직접 쓰는지 확인합니다.
+- 좌표 변환 정밀도는 `pykrtour` 테스트가 소유합니다. `python-opinet-api`에서는 오피넷 모델 경계가 `PlaceCoordinate`/`KatecPoint`를 직접 쓰는지 확인합니다.
 - `types-requests`는 `mypy`용 개발 의존성입니다. 제거하면 타입 검사가 실패합니다.
 
 ## 다음 작업 기준
@@ -184,7 +184,7 @@ record = {
 }
 ```
 
-이 예시는 pyopinet의 normalized 모델만 사용합니다. 저장 schema, cache 전략, raw 보관 여부는 호출 애플리케이션의 책임입니다.
+이 예시는 python-opinet-api의 normalized 모델만 사용합니다. 저장 schema, cache 전략, raw 보관 여부는 호출 애플리케이션의 책임입니다.
 
 ---
 
@@ -242,7 +242,7 @@ raw = to_json_safe_raw(station.raw)
 
 2026-05-06에 PEP 561 typed package 지원을 추가했습니다.
 
-- `opinet/py.typed` marker를 추가했습니다.
+- `src/opinet/py.typed` marker를 추가했습니다.
 - `pyproject.toml`의 setuptools package data에 `py.typed`를 등록했습니다.
 - dev extra에 packaging smoke용 `build`, `wheel`, `setuptools>=68`를 명시했습니다.
 - `tests/test_pep561_packaging.py`에서 wheel/sdist를 빌드하고, 각 산출물을 임시 venv에 설치한 뒤 `import opinet`, `import opinet.normalized`, downstream mypy reveal smoke를 실행합니다.

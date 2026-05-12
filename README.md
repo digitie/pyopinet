@@ -1,4 +1,4 @@
-# opinet-py
+# python-opinet-api
 
 [한국석유공사(KNOC) 오피넷](https://www.opinet.co.kr) 오픈 API의 비공식 Python 클라이언트 라이브러리.
 
@@ -34,14 +34,14 @@
 ### 2단계: 라이브러리 설치
 
 ```bash
-pip install opinet  # PyPI 배포 후
+pip install python-opinet-api  # PyPI 배포 후
 ```
 
 또는 소스에서:
 
 ```bash
-git clone https://github.com/<your-org>/opinet-py.git
-cd opinet-py
+git clone https://github.com/digitie/python-opinet-api.git
+cd python-opinet-api
 pip install -e .
 ```
 
@@ -411,17 +411,17 @@ weekly = exp.get_weekly_average_price(ProductCode.GASOLINE)  # avgWeekPrice.do
 
 ```bash
 # Claude Code 글로벌 skill로 등록
-mkdir -p ~/.claude/skills/opinet-python-builder
-cp SKILL.md ~/.claude/skills/opinet-python-builder/
+mkdir -p ~/.claude/skills/python-opinet-apithon-builder
+cp SKILL.md ~/.claude/skills/python-opinet-apithon-builder/
 
 # 또는 프로젝트 단위 skill
-mkdir -p .claude/skills/opinet-python-builder
-cp SKILL.md .claude/skills/opinet-python-builder/
+mkdir -p .claude/skills/python-opinet-apithon-builder
+cp SKILL.md .claude/skills/python-opinet-apithon-builder/
 ```
 
 이후 Claude Code 세션에서:
 
-> opinet-python-builder skill을 써서 처음부터 라이브러리 만들어줘. opinet-api.md를 먼저 읽고 시작해.
+> python-opinet-apithon-builder skill을 써서 처음부터 라이브러리 만들어줘. opinet-api.md를 먼저 읽고 시작해.
 
 skill 파일은 다음을 정의합니다:
 - 패키지 구조와 모듈 책임
@@ -445,7 +445,7 @@ skill 파일은 다음을 정의합니다:
 - `pykrtour[geo]` ≥ 0.1.0
 
 **선택 기능:**
-- `pyvworld` ≥ 0.1.0 (`pip install opinet[vworld]`, VWorld로 시군구 법정동코드 매핑을 할 때)
+- `pyvworld` ≥ 0.1.0 (`pip install python-opinet-api[vworld]`, VWorld로 시군구 법정동코드 매핑을 할 때)
 
 **개발:**
 - `pytest` ≥ 7.0
@@ -461,10 +461,10 @@ Python 3.11 이상 (`StrEnum`, `slots=True` 사용).
 ## 검증
 
 ```bash
-python -m compileall opinet tests
+python -m compileall src/opinet tests
 python -m pytest
 python -m pytest --cov=opinet --cov-fail-under=90
-python -m mypy opinet
+python -m mypy src/opinet
 ```
 
 기본 테스트는 네트워크를 사용하지 않고 `responses`로 HTTP 응답을 재생합니다. 실제 API 호출 테스트를 추가할 때는 `@pytest.mark.live`로 분리하고 `--run-live`와 `OPINET_API_KEY`를 요구하세요.
@@ -477,7 +477,7 @@ python -m mypy opinet
 
 ## 문서 작성 규칙
 
-- 문서에서 파일 위치를 적을 때는 프로젝트 루트 기준 상대 경로를 사용합니다. 예: `opinet/client.py`, `tests/fixtures/avg_all_price.json`.
+- 문서에서 파일 위치를 적을 때는 프로젝트 루트 기준 상대 경로를 사용합니다. 예: `src/opinet/client.py`, `tests/fixtures/avg_all_price.json`.
 - 로컬 절대 경로는 저장소 문서에 남기지 않습니다.
 - Python 내부 문서(docstring과 유지보수용 주석)는 한글로 작성합니다.
 - API 필드명, 엔드포인트, enum 값처럼 원문 자체가 의미 있는 값은 그대로 둡니다.
@@ -497,15 +497,16 @@ python -m mypy opinet
 ├── pyproject.toml       # 패키지/테스트 설정
 ├── docs/
 │   └── implementation-status.md
-├── opinet/              # 라이브러리 소스
-│   ├── __init__.py
-│   ├── client.py        # OpinetClient
-│   ├── _http.py
-│   ├── _convert.py      # 타입 변환 헬퍼
-│   ├── exceptions.py
-│   ├── codes.py         # enum + 시도매핑
-│   ├── models.py
-│   └── experimental/    # PDF 22종 중 미검증 17종
+├── src/
+│   └── opinet/          # 라이브러리 소스, import 이름은 opinet
+│       ├── __init__.py
+│       ├── client.py    # OpinetClient
+│       ├── _http.py
+│       ├── _convert.py  # 타입 변환 헬퍼
+│       ├── exceptions.py
+│       ├── codes.py     # enum + 시도매핑
+│       ├── models.py
+│       └── experimental/ # PDF 22종 중 미검증 17종
 └── tests/
     ├── conftest.py
     ├── fixtures/        # 실제 API 응답 JSON
@@ -582,7 +583,7 @@ pytest --cov=opinet --cov-fail-under=90
 
 ## 공용 normalized layer
 
-pyopinet은 OpiNet 원본 응답을 Python 타입으로 변환한 기존 모델을 유지하면서, 여러 프로젝트에서 공통으로 재사용하기 좋은 normalized 필드도 함께 제공합니다. 이 계층은 OpiNet 자체의 도메인 해석만 담당합니다. DB 저장 방식, ETL cache, 서비스별 enum 정책, raw/serving table 설계는 각 애플리케이션에서 결정하면 됩니다.
+python-opinet-api는 OpiNet 원본 응답을 Python 타입으로 변환한 기존 모델을 유지하면서, 여러 프로젝트에서 공통으로 재사용하기 좋은 normalized 필드도 함께 제공합니다. 이 계층은 OpiNet 자체의 도메인 해석만 담당합니다. DB 저장 방식, ETL cache, 서비스별 enum 정책, raw/serving table 설계는 각 애플리케이션에서 결정하면 됩니다.
 
 ### canonical 유종
 
@@ -610,7 +611,7 @@ fuel_type_to_product_code(FuelType.DIESEL)  # ProductCode.DIESEL
 
 ### Station normalized 필드
 
-`lowTop10.do`와 `aroundAll.do`의 Station 응답은 OpiNet row에 `PRODCD`가 없는 경우가 많습니다. 이때 pyopinet은 요청에 사용한 `prodcd`를 `Station.product_code`에 채웁니다. 응답 row에 `PRODCD`가 실제로 있으면 응답 값을 우선합니다.
+`lowTop10.do`와 `aroundAll.do`의 Station 응답은 OpiNet row에 `PRODCD`가 없는 경우가 많습니다. 이때 python-opinet-api는 요청에 사용한 `prodcd`를 `Station.product_code`에 채웁니다. 응답 row에 `PRODCD`가 실제로 있으면 응답 값을 우선합니다.
 
 ```python
 from opinet import OpinetClient, ProductCode
@@ -650,7 +651,7 @@ katec.as_x_y()          # (x, y)
 
 ### AreaCode helper
 
-`AreaCode`는 OpiNet code level과 BJD 시도 prefix를 명시적으로 제공합니다. 시도는 2자리, 시군구는 4자리입니다. 시군구 4자리 OpiNet code 자체는 법정동코드와 일치하지 않으므로 pyopinet은 산술 변환을 추정하지 않습니다.
+`AreaCode`는 OpiNet code level과 BJD 시도 prefix를 명시적으로 제공합니다. 시도는 2자리, 시군구는 4자리입니다. 시군구 4자리 OpiNet code 자체는 법정동코드와 일치하지 않으므로 python-opinet-api는 산술 변환을 추정하지 않습니다.
 
 ```python
 area = client.get_area_codes("01")[0]
@@ -701,7 +702,7 @@ avg.raw["TRADE_DT"]  # "20250723"
 
 ### normalized 저장 예시
 
-아래 예시는 앱별 adapter를 최소화하고, pyopinet의 공용 해석 결과를 그대로 저장 계층에 넘기는 형태입니다.
+아래 예시는 앱별 adapter를 최소화하고, python-opinet-api의 공용 해석 결과를 그대로 저장 계층에 넘기는 형태입니다.
 
 ```python
 def to_station_record(station):
@@ -723,7 +724,7 @@ def to_station_record(station):
     }
 ```
 
-`raw`를 저장할지, 별도 raw table에 둘지, serving table에 normalized 값만 둘지는 애플리케이션 정책으로 결정하세요. pyopinet은 OpiNet domain parsing과 canonical helper만 제공합니다.
+`raw`를 저장할지, 별도 raw table에 둘지, serving table에 normalized 값만 둘지는 애플리케이션 정책으로 결정하세요. python-opinet-api는 OpiNet domain parsing과 canonical helper만 제공합니다.
 
 | 날짜 | 내용 |
 |---|---|
@@ -798,7 +799,7 @@ payload = station_record.model_dump(mode="json")  # Pydantic JSON mode
 
 ### PEP 561 typing
 
-pyopinet은 PEP 561 typed package입니다. 배포 산출물에는 `opinet/py.typed` marker가 포함되며, downstream 프로젝트의 mypy가 `opinet`과 `opinet.normalized` 타입 정보를 직접 읽을 수 있습니다.
+python-opinet-api는 PEP 561 typed package입니다. 소스에는 `src/opinet/py.typed` marker가 있고, 배포 산출물에는 import 패키지 경로인 `opinet/py.typed`로 포함됩니다. downstream 프로젝트의 mypy가 `opinet`과 `opinet.normalized` 타입 정보를 직접 읽을 수 있습니다.
 
 패키징 테스트는 wheel과 sdist를 각각 임시 venv에 설치한 뒤 `import opinet`, `import opinet.normalized`, downstream mypy smoke를 확인합니다.
 

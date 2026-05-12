@@ -1,6 +1,6 @@
 ---
-name: opinet-python-builder
-description: Use this skill when the user asks to build, extend, debug, or test a Python client library for the Korean Opinet (오피넷) free fuel-price API. Triggers include any mention of "오피넷", "opinet", "유가정보 API", "주유소 가격 API", or filenames like opinet/client.py. Also use when wiring Opinet KATEC/WGS84 coordinates through pykrtour, mapping Opinet sido codes to BJD (법정동) codes, or mapping Opinet HTTP/body errors to Python exceptions. Do NOT use for unrelated KNOC datasets, gov.kr public data portal datasets, or non-Korean fuel APIs.
+name: python-opinet-apithon-builder
+description: Use this skill when the user asks to build, extend, debug, or test a Python client library for the Korean Opinet (오피넷) free fuel-price API. Triggers include any mention of "오피넷", "opinet", "유가정보 API", "주유소 가격 API", or filenames like src/opinet/client.py. Also use when wiring Opinet KATEC/WGS84 coordinates through pykrtour, mapping Opinet sido codes to BJD (법정동) codes, or mapping Opinet HTTP/body errors to Python exceptions. Do NOT use for unrelated KNOC datasets, gov.kr public data portal datasets, or non-Korean fuel APIs.
 ---
 
 # Opinet Python Library Builder
@@ -19,7 +19,7 @@ You are helping build/maintain a Python client for the Korean **Opinet** free fu
 
 ## Documentation style invariants
 
-1. 문서에서 파일 위치를 언급할 때는 프로젝트 루트 기준 상대 경로만 사용한다. 예: `opinet/client.py`, `tests/fixtures/avg_all_price.json`.
+1. 문서에서 파일 위치를 언급할 때는 프로젝트 루트 기준 상대 경로만 사용한다. 예: `src/opinet/client.py`, `tests/fixtures/avg_all_price.json`.
 2. 로컬 절대 경로는 저장소 문서에 남기지 않는다.
 3. Python 내부 문서(모듈, 클래스, 함수, 메서드 docstring과 유지보수용 주석)는 한글로 작성한다.
 4. API 필드명, 엔드포인트명, enum 값, 외부 오류 메시지처럼 원문 자체가 의미 있는 값은 그대로 둔다.
@@ -50,29 +50,31 @@ These are the only endpoints with a public spec page on the Opinet site:
 | `get_station_detail()` | `detailById.do` | 1 |
 | `get_area_codes()` | `areaCode.do` | 5 |
 
-The PDF guidebook mentions 22 free APIs but only 5 are formally documented. Put the other 17 in `opinet/experimental/client.py` with explicit "Unverified" warnings in every docstring.
+The PDF guidebook mentions 22 free APIs but only 5 are formally documented. Put the other 17 in `src/opinet/experimental/client.py` with explicit "Unverified" warnings in every docstring.
 
 ## Required deliverables when implementing from scratch
 
 ```
-opinet/
-├── opinet/__init__.py        # re-export OpinetClient, exceptions, enums, models
-├── opinet/client.py          # OpinetClient (5 official endpoints)
-├── opinet/_http.py           # HTTP helper + error mapping; one place for response → exception logic
-├── opinet/_convert.py        # type conversion helpers (to_date, to_time, to_float_or_none, to_bool_yn, strip_or_none)
-├── opinet/exceptions.py      # OpinetError + 6 subclasses (see below)
-├── opinet/codes.py           # ProductCode, BrandCode, SortOrder, StationType (StrEnum)
-│                             # is_alddle()
-│                             # OPINET_TO_BJD / BJD_TO_OPINET / BJD_LEGACY_TO_NEW (sido mapping)
-│                             # opinet_sido_to_bjd / bjd_sido_to_opinet
-├── opinet/models.py          # frozen slots dataclasses (Python native types)
-├── opinet/experimental/
-│   ├── __init__.py
-│   └── client.py             # OpinetExperimentalClient (PDF guidebook 17 unverified APIs)
+python-opinet-api/
+├── src/
+│   └── opinet/
+│       ├── __init__.py        # re-export OpinetClient, exceptions, enums, models
+│       ├── client.py          # OpinetClient (5 official endpoints)
+│       ├── _http.py           # HTTP helper + error mapping; one place for response → exception logic
+│       ├── _convert.py        # type conversion helpers (to_date, to_time, to_float_or_none, to_bool_yn, strip_or_none)
+│       ├── exceptions.py      # OpinetError + 6 subclasses (see below)
+│       ├── codes.py           # ProductCode, BrandCode, SortOrder, StationType (StrEnum)
+│       │                      # is_alddle()
+│       │                      # OPINET_TO_BJD / BJD_TO_OPINET / BJD_LEGACY_TO_NEW (sido mapping)
+│       │                      # opinet_sido_to_bjd / bjd_sido_to_opinet
+│       ├── models.py          # frozen slots dataclasses (Python native types)
+│       └── experimental/
+│           ├── __init__.py
+│           └── client.py      # OpinetExperimentalClient (PDF guidebook 17 unverified APIs)
 ├── tests/conftest.py
-├── tests/fixtures/*.json     # captured responses (see "Initial fixtures" below)
+├── tests/fixtures/*.json      # captured responses (see "Initial fixtures" below)
 ├── tests/test_*.py
-└── pyproject.toml            # deps: requests, pydantic, pykrtour[geo]; dev: pytest, responses, pytest-cov
+└── pyproject.toml             # deps: requests, pydantic, pykrtour[geo]; dev: pytest, responses, pytest-cov
 ```
 
 ## Type conversion policy ⭐ CRITICAL
@@ -102,7 +104,7 @@ The Opinet API returns everything as strings — `"PRICE": "1745"`, `"TRADE_DT":
 4. **Conversion failures (bad date format, non-numeric in numeric field) raise `OpinetServerError`** (wrapping the underlying ValueError). The HTTP layer catches them.
 5. **Coords are stored in BOTH forms** on the model — `katec_x/katec_y` (raw) AND `lon/lat` (auto-converted). Conversion happens once at model creation.
 
-### Helper module template (`opinet/_convert.py`)
+### Helper module template (`src/opinet/_convert.py`)
 
 ```python
 from datetime import date, datetime, time
@@ -155,7 +157,7 @@ Opinet's `AREA_CD` is **NOT** the standard Korean BJD (법정동) code. Users wi
 ### The mapping
 
 ```python
-# opinet/codes.py — module-level constants
+# src/opinet/codes.py — module-level constants
 OPINET_TO_BJD: dict[str, str] = {
     "01": "11",   # 서울특별시
     "02": "41",   # 경기도
@@ -527,7 +529,7 @@ def _build_station(oil: dict) -> Station:
 - `OilPrice` does not include `product_name`; official `OIL_PRICE` rows do not include `PRODNM`.
 - Keep fixture numeric/date/time values as strings. Turning them into JSON numbers weakens conversion tests.
 - Prefer the actual response field `POLL_DIV_CO` / `GPOLL_DIV_CO`; accept `*_CD` only as fallback.
-- Keep `types-requests` in dev dependencies so `python -m mypy opinet` stays green.
+- Keep `types-requests` in dev dependencies so `python -m mypy src/opinet` stays green.
 
 ## When the user asks to add a new endpoint
 

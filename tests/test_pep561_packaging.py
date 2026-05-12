@@ -48,8 +48,8 @@ def built_distributions(tmp_path_factory: pytest.TempPathFactory) -> dict[str, P
         cwd=PROJECT_ROOT,
     )
     return {
-        "wheel": next(dist_dir.glob("opinet-*.whl")),
-        "sdist": next(dist_dir.glob("opinet-*.tar.gz")),
+        "wheel": next(dist_dir.glob("python_opinet_api-*.whl")),
+        "sdist": next(dist_dir.glob("python_opinet_api-*.tar.gz")),
     }
 
 
