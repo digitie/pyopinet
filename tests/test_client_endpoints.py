@@ -322,9 +322,24 @@ def test_missing_oil_is_server_error():
         OpinetClient("test-key", retry_backoff=0).get_area_codes()
 
 
-def test_missing_api_key_raises_auth_error(monkeypatch):
+def test_missing_api_key_raises_auth_error(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("OPINET_API_KEY", raising=False)
     client = OpinetClient(retry_backoff=0)
 
     with pytest.raises(OpinetAuthError):
         client.get_area_codes()
+
+
+def test_api_key_is_normalized_from_explicit_env_and_dotenv(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("OPINET_API_KEY", raising=False)
+
+    assert OpinetClient("  explicit-key \n\t", retry_backoff=0).api_key == "explicit-key"
+
+    monkeypatch.setenv("OPINET_API_KEY", " env-key \n")
+    assert OpinetClient(retry_backoff=0).api_key == "env-key"
+
+    monkeypatch.delenv("OPINET_API_KEY", raising=False)
+    (tmp_path / ".env").write_text('OPINET_API_KEY=" local-key "\n', encoding="utf-8")
+    assert OpinetClient(retry_backoff=0).api_key == "local-key"

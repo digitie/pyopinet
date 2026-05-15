@@ -16,9 +16,27 @@
 
 PDF 가이드북의 추가 API는 아직 공식 명세 페이지가 없으므로 `opinet.experimental`에 둡니다. 검증 전에는 안정 API로 승격하지 않습니다.
 
+## 2026-05-15 디버그 UI/fixture 지원
+
+REST API 디버그 UI 설계안에 맞춰 라이브러리 본체에 Streamlit 비의존 helper를 추가했습니다.
+
+| 영역 | 구현 |
+|---|---|
+| API 카탈로그 | `src/opinet/catalog.py`의 `get_api_catalog()`, `get_api_catalog_item()`, `get_api_catalog_options()` |
+| 데이터셋 표시 | `ApiCatalogItem.dataset_name`으로 사람이 읽기 쉬운 데이터셋명 제공 |
+| 서비스키 링크 | 모든 `ApiCatalogItem.service_key_url`이 오피넷 인증키 발급 페이지를 가리킴 |
+| 서비스키 정규화 | `OpinetClient`가 명시 인자/환경변수/`.env`에서 키를 읽고 공백 문자를 제거 |
+| DebugRun | `src/opinet/debug.py`의 `DebugRun`이 input, request, response, parsed, processed, trace, catalog item, error를 보관 |
+| fixture 저장 | `save_fixture()`, `save_debug_fixture()`가 `tests/fixtures/{function}/{case}.json` 형식으로 저장 |
+| replay 테스트 | `tests/test_generated_fixtures.py`가 하위 디렉터리 fixture를 네트워크 없이 재파싱/비교 |
+| 예제 UI | `examples/streamlit_debug_app.py`가 카탈로그 선택, 서비스키 링크, Debug Trace 탭 표시를 검증하는 참고 앱 |
+
+라이브러리 런타임 의존성에는 Streamlit을 추가하지 않았습니다. 화면 앱은 별도 UI 프로젝트나 `examples/streamlit_debug_app.py`에서 선택적으로 설치해 실행합니다.
+
 ## 구현 원칙
 
 - 인증 파라미터는 `certkey`, 출력 포맷은 `out=json`입니다.
+- 서비스키는 `OpinetClient(api_key=...)`, `OPINET_API_KEY`, 현재 작업 디렉터리 또는 부모 디렉터리의 `.env` 순서로 읽습니다. 복사/붙여넣기 중 섞인 공백 문자는 값이 아니므로 제거합니다.
 - HTTP 상태/본문 기반 오류 매핑은 `src/opinet/_http.py`에 모읍니다.
 - 엔드포인트 파라미터 오류는 HTTP 호출 전에 `OpinetInvalidParameterError`로 실패시킵니다.
 - API 응답은 모델 생성 전에 `date`, `time`, `float`, `bool`, `StrEnum`으로 변환합니다.
@@ -42,6 +60,7 @@ PDF 가이드북의 추가 API는 아직 공식 명세 페이지가 없으므로
 | Coordinates | `kraddr.base` 테스트, `tests/test_client_endpoints.py` | WGS84↔KATEC 변환은 `kraddr.base`, 오피넷 요청/응답 경계는 클라이언트 테스트 |
 | HTTP errors | `tests/test_http.py` | 인증/쿼터/5xx/네트워크/JSON 오류 |
 | Endpoints | `tests/test_client_endpoints.py` | 공식 5개 API의 타입, 파라미터, 빈 결과, 단일 dict 응답 |
+| API catalog/debug | `tests/test_catalog.py`, `tests/test_debug.py`, `tests/test_generated_fixtures.py` | 카탈로그 export, DebugRun trace, 민감정보 마스킹, fixture replay |
 | Experimental boundary | `tests/test_experimental.py` | 미검증 API가 명시적으로 unimplemented임을 고정 |
 
 필수 검증 명령:

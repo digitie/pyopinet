@@ -1,6 +1,15 @@
 """한국 오피넷 유가 API의 비공식 Python 클라이언트."""
 
 from .client import OpinetClient
+from .catalog import (
+    API_CATALOG,
+    SERVICE_KEY_URL,
+    ApiCatalogItem,
+    ApiParameter,
+    get_api_catalog,
+    get_api_catalog_item,
+    get_api_catalog_options,
+)
 from .codes import (
     BrandCode,
     CanonicalFuelType,
@@ -13,6 +22,21 @@ from .codes import (
     is_alddle,
     opinet_sido_to_bjd,
     product_code_to_fuel_type,
+)
+from .debug import (
+    DebugRun,
+    OpinetDebugClient,
+    assert_case,
+    build_fixture,
+    jsonable,
+    parse_debug_response,
+    process_debug_result,
+    redact_sensitive,
+    remove_fields,
+    replay_fixture_case,
+    save_debug_fixture,
+    save_fixture,
+    slugify_case_name,
 )
 from .exceptions import (
     OpinetAuthError,
@@ -36,9 +60,13 @@ from .normalized import (
 
 __all__ = [
     "AreaCode",
+    "API_CATALOG",
+    "ApiCatalogItem",
+    "ApiParameter",
     "AvgPrice",
     "BrandCode",
     "CanonicalFuelType",
+    "DebugRun",
     "FuelType",
     "NormalizedFuelAverage",
     "NormalizedFuelRegionCode",
@@ -48,6 +76,7 @@ __all__ = [
     "OilPrice",
     "OpinetAuthError",
     "OpinetClient",
+    "OpinetDebugClient",
     "OpinetError",
     "OpinetInvalidParameterError",
     "OpinetNetworkError",
@@ -55,15 +84,30 @@ __all__ = [
     "OpinetRateLimitError",
     "OpinetServerError",
     "ProductCode",
+    "SERVICE_KEY_URL",
     "SortOrder",
     "Station",
     "StationDetail",
     "StationType",
+    "assert_case",
     "bjd_sido_to_opinet",
+    "build_fixture",
     "fuel_type_to_product_code",
+    "get_api_catalog",
+    "get_api_catalog_item",
+    "get_api_catalog_options",
     "is_alddle",
+    "jsonable",
     "opinet_sido_to_bjd",
+    "parse_debug_response",
+    "process_debug_result",
     "product_code_to_fuel_type",
     "raw_to_json_safe",
+    "redact_sensitive",
+    "remove_fields",
+    "replay_fixture_case",
+    "save_debug_fixture",
+    "save_fixture",
+    "slugify_case_name",
     "to_json_safe_raw",
 ]

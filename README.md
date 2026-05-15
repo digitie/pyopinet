@@ -17,6 +17,7 @@
 - **시도코드 ↔ 법정동코드 매핑**: 다른 정부 데이터와 join할 수 있도록 행정안전부 표준 법정동코드와의 양방향 매핑을 제공합니다.
 - **체계적인 예외 매핑**: 인증 실패, 호출 한도, 네트워크 오류, 서버 오류, 파라미터 오류, 타입 변환 오류를 별도 예외로 구분합니다.
 - **실제 응답 기반 fixture**: 명세서 자체가 오피넷 공식 사이트에서 발췌한 실제 응답을 포함하므로, 키 없이도 단위테스트가 동작합니다.
+- **디버그 UI/fixture 생성 지원**: 공식 5개 API 카탈로그, 사람이 읽기 쉬운 데이터셋명, 서비스키 발급 링크, replay fixture 저장 헬퍼를 라이브러리에서 제공합니다.
 
 ---
 
@@ -59,6 +60,8 @@ cp .env.example .env
 # .env 안의 OPINET_API_KEY 값을 본인 키로 변경
 pytest -m live --run-live
 ```
+
+`OpinetClient()`는 명시 인자, 환경변수, 현재 작업 디렉터리 또는 부모 디렉터리의 `.env` 순서로 `OPINET_API_KEY`를 찾습니다. 서비스키를 복사/붙여넣기할 때 섞인 줄바꿈, 탭, 공백은 자동으로 제거됩니다.
 
 ### 3단계: 사용
 
@@ -147,6 +150,35 @@ for area in client.get_area_codes():
 | `get_area_codes()` | `areaCode.do` | `list[AreaCode]` |
 
 상세 명세는 [`opinet-api.md`](./opinet-api.md) 참조.
+
+### API 카탈로그와 디버그 UI
+
+디버그 UI나 외부 도구가 API 목록을 하드코딩하지 않도록 공식 5개 API 카탈로그를 제공합니다. 각 항목에는 함수명, 엔드포인트, 데이터셋 식별자, 사람이 읽기 쉬운 데이터셋명, 파라미터 설명, 서비스키 발급 링크가 들어 있습니다.
+
+```python
+from opinet import OpinetClient, get_api_catalog_options, get_api_catalog_item
+
+options = get_api_catalog_options()
+# "반경 내 주유소 가격 (aroundAll.do)"처럼 UI에 바로 표시 가능
+
+item = get_api_catalog_item("search_stations_around")
+print(item.dataset_name)      # 반경 내 주유소 가격
+print(item.service_key_url)   # https://www.opinet.co.kr/user/custapi/openApiNew.do
+
+client = OpinetClient()       # .env 또는 환경변수의 OPINET_API_KEY 자동 로드
+run = client.debug().get_area_codes()
+print(run.dataset_name)       # 오피넷 시도/시군구 코드
+print(run.trace_payload)      # Debug Trace 탭 표시용 payload
+```
+
+Streamlit 예제는 `examples/streamlit_debug_app.py`에 있습니다. 라이브러리 본체는 Streamlit에 의존하지 않으며, 예제 앱은 API 선택 시 카탈로그 항목과 서비스키 발급 링크를 함께 표시합니다.
+
+```bash
+pip install streamlit
+streamlit run examples/streamlit_debug_app.py
+```
+
+fixture 생성/replay 설계는 [`docs/debug-fixture-workflow.md`](./docs/debug-fixture-workflow.md)에 정리되어 있습니다.
 
 ### 코드 상수
 
@@ -496,11 +528,16 @@ python -m mypy src/opinet
 ├── SKILL.md             # Claude Code용 자동 구현 skill
 ├── pyproject.toml       # 패키지/테스트 설정
 ├── docs/
+│   ├── debug-fixture-workflow.md
 │   └── implementation-status.md
+├── examples/
+│   └── streamlit_debug_app.py
 ├── src/
 │   └── opinet/          # 라이브러리 소스, import 이름은 opinet
 │       ├── __init__.py
+│       ├── catalog.py   # 공식 API 카탈로그
 │       ├── client.py    # OpinetClient
+│       ├── debug.py     # DebugRun, fixture 저장/replay 헬퍼
 │       ├── _http.py
 │       ├── _convert.py  # 타입 변환 헬퍼
 │       ├── exceptions.py
@@ -572,6 +609,7 @@ pytest --cov=opinet --cov-fail-under=90
 
 | 일자 | 내용 |
 |---|---|
+| 2026-05-15 (rev10) | 서비스키 공백 제거 및 `.env` 기본 로드, 공식 API 카탈로그, Streamlit Debug Trace 표시용 `DebugRun`, fixture replay 문서와 예제 앱 추가. |
 | 2026-05-09 (rev9) | Windows/PowerShell 환경에서 `rg` 실행 권한 실패 시 우회 명령을 사용하고, 한글 파일은 UTF-8 인코딩을 명시해 읽는 규칙 추가. |
 | 2026-05-09 (rev8) | 문서의 파일 위치 표기를 프로젝트 기준 상대 경로로 고정하고, Python 내부 문서를 한글로 작성한다는 규칙을 추가. |
 | 2026-04-30 (rev3) | 공식 5개 엔드포인트 구현, fixture 기반 네트워크-free 테스트 115개, mypy/coverage 검증, 반복 실수 방지 체크리스트 추가. |

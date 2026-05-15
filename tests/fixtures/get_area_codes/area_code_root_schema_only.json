@@ -1,0 +1,54 @@
+{
+  "name": "area-code-root-schema-only",
+  "function": "get_area_codes",
+  "description": "debug UI replay runner smoke fixture for areaCode.do root response",
+  "input": {
+    "sido": null
+  },
+  "request": {
+    "method": "GET",
+    "url": "https://www.opinet.co.kr/api/areaCode.do",
+    "query": {
+      "certkey": "<REDACTED>",
+      "out": "json"
+    },
+    "headers": {}
+  },
+  "response": {
+    "status_code": 200,
+    "headers": {
+      "content-type": "application/json"
+    },
+    "body": {
+      "RESULT": {
+        "OIL": [
+          {
+            "AREA_CD": "01",
+            "AREA_NM": "서울"
+          },
+          {
+            "AREA_CD": "10",
+            "AREA_NM": "부산"
+          }
+        ]
+      }
+    }
+  },
+  "parsed": [],
+  "processed": [],
+  "assertion": {
+    "mode": "required_fields",
+    "exclude_fields": [],
+    "required_fields": [
+      "provider",
+      "provider_region_code",
+      "provider_region_name",
+      "code_level"
+    ]
+  },
+  "meta": {
+    "created_at": "2026-05-15T00:00:00+09:00",
+    "library_version": "0.1.0",
+    "source": "debug_ui"
+  }
+}

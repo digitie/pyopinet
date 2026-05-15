@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from datetime import date, time
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from kraddr.base import KatecPoint, PlaceCoordinate
@@ -15,6 +16,7 @@ from .exceptions import OpinetAuthError, OpinetInvalidParameterError, OpinetNoDa
 from .models import AreaCode, AvgPrice, OilPrice, Station, StationDetail
 
 if TYPE_CHECKING:
+    from .debug import OpinetDebugClient
     from .vworld import OpinetSigunguBjdMapping
 
 
@@ -33,6 +35,61 @@ def _normalize_oil(data: dict[str, Any], endpoint: str) -> list[dict[str, Any]]:
             raise OpinetServerError(f"{endpoint}: RESULT.OIL must contain objects")
         return oil
     raise OpinetServerError(f"{endpoint}: RESULT.OIL must be an object or list")
+
+
+def _normalize_api_key(value: str | None) -> str | None:
+    """복사/붙여넣기로 섞인 공백 문자를 제거한 API 키를 반환한다."""
+    if value is None:
+        return None
+    normalized = "".join(str(value).split())
+    return normalized or None
+
+
+def _load_default_api_key_from_env_file() -> str | None:
+    """현재 작업 디렉터리와 부모 디렉터리의 ``.env``에서 OPINET_API_KEY를 읽는다."""
+    for env_path in _candidate_env_paths():
+        raw_value = _read_env_value(env_path, "OPINET_API_KEY")
+        normalized = _normalize_api_key(raw_value)
+        if normalized is not None:
+            return normalized
+    return None
+
+
+def _candidate_env_paths() -> tuple[Path, ...]:
+    cwd = Path.cwd().resolve()
+    paths: list[Path] = []
+    for directory in (cwd, *cwd.parents):
+        env_path = directory / ".env"
+        if env_path not in paths:
+            paths.append(env_path)
+    return tuple(paths)
+
+
+def _read_env_value(env_path: Path, key: str) -> str | None:
+    if not env_path.exists() or not env_path.is_file():
+        return None
+    try:
+        lines = env_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+
+    for raw_line in lines:
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        raw_key, raw_value = line.split("=", 1)
+        if raw_key.strip().lstrip("\ufeff") == key:
+            return _clean_env_value(raw_value)
+    return None
+
+
+def _clean_env_value(raw_value: str) -> str:
+    value = raw_value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in {'"', "'"}:
+        return value[1:-1]
+    if " #" in value:
+        value = value.split(" #", 1)[0].rstrip()
+    return value
 
 
 def _normalize_items(value: Any, field: str, endpoint: str) -> list[dict[str, Any]]:
@@ -90,6 +147,13 @@ def _coerce_product_code(value: ProductCode | str, field: str = "prodcd") -> Pro
         raise OpinetInvalidParameterError(f"{field} must be a valid Opinet product code") from exc
 
 
+def _coerce_sort_order(value: SortOrder | str) -> SortOrder:
+    try:
+        return SortOrder(value)
+    except ValueError as exc:
+        raise OpinetInvalidParameterError("sort must be a valid Opinet sort code") from exc
+
+
 def _validate_area_param(area: str) -> None:
     if len(area) not in (2, 4) or not area.isdigit():
         raise OpinetInvalidParameterError("area must be a 2-digit sido or 4-digit sigungu code")
@@ -124,7 +188,11 @@ class OpinetClient:
         retry_backoff: float = 0.5,
         session: Any | None = None,
     ) -> None:
-        self.api_key = api_key or os.getenv("OPINET_API_KEY")
+        self.api_key = (
+            _normalize_api_key(api_key)
+            or _normalize_api_key(os.getenv("OPINET_API_KEY"))
+            or _load_default_api_key_from_env_file()
+        )
         self.timeout = timeout
         self.strict_empty = strict_empty
         self._http = (
@@ -144,19 +212,20 @@ class OpinetClient:
             raise OpinetAuthError("OPINET_API_KEY is not set and api_key was not provided")
         return self._http
 
+    def debug(self) -> OpinetDebugClient:
+        """디버그 실행과 fixture 저장을 돕는 별도 헬퍼를 반환한다."""
+        from .debug import OpinetDebugClient
+
+        return OpinetDebugClient(self)
+
     def _handle_empty(self, rows: list[Any], endpoint: str) -> None:
         if not rows and self.strict_empty:
             raise OpinetNoDataError(f"{endpoint}: RESULT.OIL is empty")
 
-    def get_national_average_price(self) -> list[AvgPrice]:
-        """전국 주유소 평균가격을 조회한다.
-
-        ``avgAllPrice.do``(apiId=4)를 호출하며 날짜와 가격 필드는 각각
-        ``date``와 ``float``로 변환된다.
-        """
+    def _parse_national_average_price_response(self, data: dict[str, Any]) -> list[AvgPrice]:
+        """``avgAllPrice.do`` 응답 body를 평균가 모델 리스트로 변환한다."""
         endpoint = "avgAllPrice.do"
-        rows = _normalize_oil(self._require_http().get(endpoint), endpoint)
-        self._handle_empty(rows, endpoint)
+        rows = _normalize_oil(data, endpoint)
         parsed: list[AvgPrice] = []
         for row in rows:
             try:
@@ -172,6 +241,49 @@ class OpinetClient:
                 )
             except (ValueError, KeyError) as exc:
                 raise _parse_error(endpoint, exc) from exc
+        return parsed
+
+    def _parse_station_list_response(
+        self,
+        data: dict[str, Any],
+        endpoint: str,
+        *,
+        request_product_code: ProductCode,
+    ) -> list[Station]:
+        """``lowTop10.do``/``aroundAll.do`` 응답 body를 주유소 모델 리스트로 변환한다."""
+        rows = _normalize_oil(data, endpoint)
+        return [self._build_station(row, endpoint, request_product_code=request_product_code) for row in rows]
+
+    def _parse_station_detail_response(self, data: dict[str, Any]) -> StationDetail:
+        """``detailById.do`` 응답 body를 주유소 상세 모델로 변환한다."""
+        endpoint = "detailById.do"
+        rows = _normalize_oil(data, endpoint)
+        if not rows:
+            raise OpinetNoDataError(f"{endpoint}: RESULT.OIL is empty")
+        return self._build_station_detail(rows[0], endpoint)
+
+    def _parse_area_codes_response(self, data: dict[str, Any]) -> list[AreaCode]:
+        """``areaCode.do`` 응답 body를 지역 코드 모델 리스트로 변환한다."""
+        endpoint = "areaCode.do"
+        rows = _normalize_oil(data, endpoint)
+        parsed: list[AreaCode] = []
+        for row in rows:
+            code = strip_or_none(row.get("AREA_CD"))
+            name = strip_or_none(row.get("AREA_NM"))
+            if code is None or name is None:
+                raise OpinetServerError(f"{endpoint}: AREA_CD and AREA_NM are required")
+            parsed.append(AreaCode(code=code, name=name, raw=row))
+        return parsed
+
+    def get_national_average_price(self) -> list[AvgPrice]:
+        """전국 주유소 평균가격을 조회한다.
+
+        ``avgAllPrice.do``(apiId=4)를 호출하며 날짜와 가격 필드는 각각
+        ``date``와 ``float``로 변환된다.
+        """
+        endpoint = "avgAllPrice.do"
+        parsed = self._parse_national_average_price_response(self._require_http().get(endpoint))
+        self._handle_empty(parsed, endpoint)
         return parsed
 
     def get_lowest_price_top20(
@@ -193,9 +305,13 @@ class OpinetClient:
         params: dict[str, Any] = {"prodcd": product_code.value, "cnt": cnt}
         if area is not None:
             params["area"] = area
-        rows = _normalize_oil(self._require_http().get(endpoint, params=params), endpoint)
-        self._handle_empty(rows, endpoint)
-        return [self._build_station(row, endpoint, request_product_code=product_code) for row in rows]
+        parsed = self._parse_station_list_response(
+            self._require_http().get(endpoint, params=params),
+            endpoint,
+            request_product_code=product_code,
+        )
+        self._handle_empty(parsed, endpoint)
+        return parsed
 
     def search_stations_around(
         self,
@@ -223,8 +339,9 @@ class OpinetClient:
             x, y = katec.as_x_y()
 
         product_code = _coerce_product_code(prodcd)
+        sort_order = _coerce_sort_order(sort)
         endpoint = "aroundAll.do"
-        rows = _normalize_oil(
+        parsed = self._parse_station_list_response(
             self._require_http().get(
                 endpoint,
                 params={
@@ -232,13 +349,14 @@ class OpinetClient:
                     "y": y,
                     "radius": radius_m,
                     "prodcd": product_code.value,
-                    "sort": SortOrder(sort).value,
+                    "sort": sort_order.value,
                 },
             ),
             endpoint,
+            request_product_code=product_code,
         )
-        self._handle_empty(rows, endpoint)
-        return [self._build_station(row, endpoint, request_product_code=product_code) for row in rows]
+        self._handle_empty(parsed, endpoint)
+        return parsed
 
     def get_station_detail(self, uni_id: str) -> StationDetail:
         """주유소 ID로 상세정보를 조회한다.
@@ -249,10 +367,7 @@ class OpinetClient:
         if not uni_id:
             raise OpinetInvalidParameterError("uni_id must not be empty")
         endpoint = "detailById.do"
-        rows = _normalize_oil(self._require_http().get(endpoint, params={"id": uni_id}), endpoint)
-        if not rows:
-            raise OpinetNoDataError(f"{endpoint}: RESULT.OIL is empty")
-        return self._build_station_detail(rows[0], endpoint)
+        return self._parse_station_detail_response(self._require_http().get(endpoint, params={"id": uni_id}))
 
     def get_area_codes(self, sido: str | None = None) -> list[AreaCode]:
         """시도 또는 시군구 코드를 조회한다.
@@ -266,15 +381,8 @@ class OpinetClient:
             opinet_sido_to_bjd(sido)
         endpoint = "areaCode.do"
         params = {"area": sido} if sido is not None else None
-        rows = _normalize_oil(self._require_http().get(endpoint, params=params), endpoint)
-        self._handle_empty(rows, endpoint)
-        parsed: list[AreaCode] = []
-        for row in rows:
-            code = strip_or_none(row.get("AREA_CD"))
-            name = strip_or_none(row.get("AREA_NM"))
-            if code is None or name is None:
-                raise OpinetServerError(f"{endpoint}: AREA_CD and AREA_NM are required")
-            parsed.append(AreaCode(code=code, name=name, raw=row))
+        parsed = self._parse_area_codes_response(self._require_http().get(endpoint, params=params))
+        self._handle_empty(parsed, endpoint)
         return parsed
 
     def resolve_sigungu_bjd_code(
