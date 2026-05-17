@@ -84,7 +84,7 @@ for row in client.get_national_average_price():
 from kraddr.base import PlaceCoordinate
 
 stations = client.search_stations_around(
-    coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),  # 강남역 위경도
+    coordinate=PlaceCoordinate(lat=37.4979, lon=127.0276),  # 강남역 위경도
     radius_m=3000,
     prodcd=ProductCode.GASOLINE,
     sort=SortOrder.PRICE,
@@ -222,9 +222,9 @@ is_alddle(BrandCode.SKE)  # False
 ```python
 from kraddr.base import PlaceCoordinate
 
-# 입력: kraddr.base.PlaceCoordinate (WGS84 lon/lat)
+# 입력: kraddr.base.PlaceCoordinate (WGS84 lat/lon DTO)
 stations = client.search_stations_around(
-    coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),
+    coordinate=PlaceCoordinate(lat=37.4979, lon=127.0276),
     ...
 )
 
@@ -241,7 +241,7 @@ station.katec_x, station.katec_y  # 호환용 KATEC float
 ```python
 from kraddr.base import KatecPoint, PlaceCoordinate
 
-x, y = PlaceCoordinate(lon=127.0276, lat=37.4979).to_katec().as_x_y()
+x, y = PlaceCoordinate(lat=37.4979, lon=127.0276).to_katec().as_x_y()
 coord = PlaceCoordinate.from_katec(KatecPoint(314871.80, 544012.00))  # SK서광주유소
 ```
 
@@ -322,7 +322,7 @@ from opinet.exceptions import (
 
 try:
     stations = client.search_stations_around(
-        coordinate=PlaceCoordinate(lon=127.0, lat=37.5),
+        coordinate=PlaceCoordinate(lat=37.5, lon=127.0),
         radius_m=10000,
     )
 except OpinetInvalidParameterError as e:
@@ -685,7 +685,7 @@ coord.as_lon_lat()      # (lon, lat)
 katec.as_x_y()          # (x, y)
 ```
 
-`PlaceCoordinate`와 `KatecPoint`는 `kraddr.base`가 제공합니다. WGS84 축 순서는 `PlaceCoordinate(lon=..., lat=...)`입니다.
+`PlaceCoordinate`와 `KatecPoint`는 `kraddr.base`가 제공합니다. WGS84 공개 DTO 축 순서는 `PlaceCoordinate(lat=..., lon=...)`입니다. KATEC 변환과 WKT/GeoJSON 출력 경계에서는 각 표준에 맞춰 `(x, y)` 또는 `(lon, lat)`를 사용합니다.
 
 ### AreaCode helper
 

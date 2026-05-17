@@ -157,7 +157,7 @@ def test_jsonable_redaction_slug_and_assertions() -> None:
     assert slugify_case_name(" ... ") == "case"
     assert jsonable(ProductCode.GASOLINE) == "B027"
     assert jsonable(date(2026, 5, 15)) == "2026-05-15"
-    assert jsonable(PlaceCoordinate(lon=127.0, lat=37.5)) == {"lon": 127.0, "lat": 37.5}
+    assert jsonable(PlaceCoordinate(lat=37.5, lon=127.0)) == {"lat": 37.5, "lon": 127.0}
     assert jsonable(KatecPoint(314871.8, 544012.0)) == {"x": 314871.8, "y": 544012.0}
     assert jsonable(object()).startswith("<object object at")
     assert redact_sensitive({"nested": [{"access_token": "secret"}]}) == {
@@ -239,7 +239,7 @@ def test_debug_client_captures_runtime_and_validation_errors(
         OpinetClient(retry_backoff=0).debug().get_area_codes(raise_errors=True)
 
     invalid_around = OpinetClient("secret-key", retry_backoff=0).debug().search_stations_around(
-        coordinate=PlaceCoordinate(lon=127.0, lat=37.5),
+        coordinate=PlaceCoordinate(lat=37.5, lon=127.0),
         radius_m=0,
     )
     assert invalid_around.error["type"] == "OpinetInvalidParameterError"

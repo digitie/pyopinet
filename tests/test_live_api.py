@@ -108,7 +108,7 @@ def test_live_official_endpoints_parse_when_key_returns_data(live_client):
     assert isinstance(lowest[0].price, float)
 
     nearby = live_client.search_stations_around(
-        coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),
+        coordinate=PlaceCoordinate(lat=37.4979, lon=127.0276),
         radius_m=1000,
         prodcd=ProductCode.GASOLINE,
     )

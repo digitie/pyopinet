@@ -171,7 +171,7 @@ class Station:
 
     @property
     def coordinate(self) -> PlaceCoordinate:
-        return PlaceCoordinate(lon=self.lon, lat=self.lat)
+        return PlaceCoordinate(lat=self.lat, lon=self.lon)
 
     @property
     def katec_coordinate(self) -> KatecPoint:
@@ -253,7 +253,7 @@ class StationDetail:
 
     @property
     def coordinate(self) -> PlaceCoordinate:
-        return PlaceCoordinate(lon=self.lon, lat=self.lat)
+        return PlaceCoordinate(lat=self.lat, lon=self.lon)
 
     @property
     def katec_coordinate(self) -> KatecPoint:

@@ -137,7 +137,7 @@ def test_around_all_wgs84_types_and_query(client, load_fixture):
     responses.add(responses.GET, OPINET_BASE_URL + "aroundAll.do", json=load_fixture("around_all_gangnam.json"))
 
     stations = client.search_stations_around(
-        coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),
+        coordinate=PlaceCoordinate(lat=37.4979, lon=127.0276),
         radius_m=3000,
         prodcd=ProductCode.GASOLINE,
         sort=SortOrder.PRICE,
@@ -165,7 +165,7 @@ def test_around_all_wgs84_types_and_query(client, load_fixture):
 def test_around_all_place_coordinate_query(client, load_fixture):
     responses.add(responses.GET, OPINET_BASE_URL + "aroundAll.do", json=load_fixture("around_all_gangnam.json"))
 
-    client.search_stations_around(coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979), radius_m=1000)
+    client.search_stations_around(coordinate=PlaceCoordinate(lat=37.4979, lon=127.0276), radius_m=1000)
 
     query = _query(responses.calls[0])
     assert float(query["x"][0]) == pytest.approx(314213.3092)
@@ -188,9 +188,9 @@ def test_around_all_katec_query(client, load_fixture):
     "kwargs",
     [
         {},
-        {"coordinate": PlaceCoordinate(lon=127.0, lat=37.5), "katec": KatecPoint(300000.0, 540000.0)},
-        {"coordinate": PlaceCoordinate(lon=127.0, lat=37.5), "radius_m": 0},
-        {"coordinate": PlaceCoordinate(lon=127.0, lat=37.5), "radius_m": 5001},
+        {"coordinate": PlaceCoordinate(lat=37.5, lon=127.0), "katec": KatecPoint(300000.0, 540000.0)},
+        {"coordinate": PlaceCoordinate(lat=37.5, lon=127.0), "radius_m": 0},
+        {"coordinate": PlaceCoordinate(lat=37.5, lon=127.0), "radius_m": 5001},
     ],
 )
 def test_around_invalid_params(client, kwargs):

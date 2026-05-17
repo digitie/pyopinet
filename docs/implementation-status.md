@@ -185,7 +185,7 @@ from opinet import OpinetClient, ProductCode
 
 client = OpinetClient()
 station = client.search_stations_around(
-    coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),
+    coordinate=PlaceCoordinate(lat=37.4979, lon=127.0276),
     prodcd=ProductCode.DIESEL,
 )[0]
 

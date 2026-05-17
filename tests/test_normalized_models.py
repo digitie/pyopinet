@@ -130,7 +130,7 @@ def test_around_station_request_product_context(client, load_fixture):
     responses.add(responses.GET, OPINET_BASE_URL + "aroundAll.do", json=load_fixture("around_all_gangnam.json"))
 
     stations = client.search_stations_around(
-        coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),
+        coordinate=PlaceCoordinate(lat=37.4979, lon=127.0276),
         prodcd=ProductCode.DIESEL,
     )
 

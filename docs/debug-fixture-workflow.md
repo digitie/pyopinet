@@ -39,7 +39,7 @@ catalog_options = get_api_catalog_options()
 
 client = OpinetClient(api_key="...")
 run = client.debug().search_stations_around(
-    coordinate=PlaceCoordinate(lon=127.0276, lat=37.4979),
+    coordinate=PlaceCoordinate(lat=37.4979, lon=127.0276),
     radius_m=3000,
     prodcd=ProductCode.GASOLINE,
 )
